@@ -501,6 +501,8 @@ const sourceLibrary = {
   "iimc": { name: "IIM Calcutta Product Management Casebook", type: "Local study library" },
   "mdi": { name: "MDI Product Management Casebook", type: "Local study library" },
   "bitsom": { name: "BITSoM Product Management Handbook", type: "Local study library" },
+  "fms": { name: "FMS Product Management Casebook", type: "Local study library" },
+  "xlri": { name: "XLRI Product Management Casebook", type: "Local study library" },
   "metrics-playbook": { name: "Product Metrics & Execution Playbook", type: "Local study library" },
   "brian-sense": { name: "Brian’s Product Sense Interview Guide", type: "Local study library" },
   "brian-analytics": { name: "Brian’s Analytical Interview Guide", type: "Local study library" },
@@ -657,7 +659,7 @@ function showToast(message) {
 function getRoute() {
   const hash = location.hash.replace(/^#/, "");
   if (!hash || hash === "overview") return { view: "learn", module: state.currentModule, lesson: state.currentLesson };
-  if (["objectives", "core-concept", "evidence-stack", "decision-shift", "playbook", "case", "practice-task", "evaluation"].includes(hash)) return { view: "learn", module: state.currentModule, lesson: state.currentLesson, section: hash };
+  if (["objectives", "source-reading", "core-concept", "playbook", "case", "practice-task", "evaluation"].includes(hash)) return { view: "learn", module: state.currentModule, lesson: state.currentLesson, section: hash };
   const parts = hash.split("/");
   if (parts[0] === "learn") return { view: "learn", module: parts[1] || state.currentModule, lesson: parts[2] || state.currentLesson, section: parts[3] };
   return { view: parts[0], module: parts[1], lesson: parts[2], section: parts[3] };
@@ -718,22 +720,13 @@ function syllabusHTML() {
 }
 
 function lessonBriefHTML(module, lesson) {
-  const icons = ["ph-target", "ph-scales", "ph-magnifying-glass"];
-  return `<section class="lesson-brief" aria-label="Lesson brief">
-    <div class="brief-intro">
-      <span><i class="ph ph-file-text" aria-hidden="true"></i> WRITTEN LESSON BRIEF</span>
-      <h2>The decision this lesson improves</h2>
-      <p>${lesson.summary} This matters because ${module.summary.charAt(0).toLowerCase()}${module.summary.slice(1)}</p>
-      <p>The working model for the lesson is <strong>${module.framework}</strong>. Use it to make the reasoning visible, compare alternatives, and state which new evidence would change your mind.</p>
-    </div>
+  const dossier = sourceDossiers[module.id];
+  return `<section class="lesson-brief compact-lesson-brief" aria-label="Lesson orientation">
+    <div class="brief-intro"><span><i class="ph ph-path" aria-hidden="true"></i> LEARNING PATH</span><h2>${dossier.arc}</h2><p><strong>Builds on:</strong> ${dossier.prerequisites}</p></div>
     <div class="brief-facts">
       <article><i class="ph ph-clock" aria-hidden="true"></i><span><small>ESTIMATED STUDY</small><b>${lesson.minutes} minutes</b></span></article>
       <article><i class="ph ph-toolbox" aria-hidden="true"></i><span><small>DECISION TOOL</small><b>${module.framework}</b></span></article>
       <article><i class="ph ph-pencil-line" aria-hidden="true"></i><span><small>APPLIED OUTPUT</small><b>${lesson.artifact}</b></span></article>
-    </div>
-    <div class="decision-lens">
-      <header><i class="ph ph-compass" aria-hidden="true"></i><div><small>DECISION LENS</small><h3>Questions to carry through the lesson</h3></div></header>
-      <div>${lesson.keyMoves.map((move, index) => `<article><i class="ph ${icons[index]}" aria-hidden="true"></i><div><b>${move}</b><p>${decisionQuestion(module, lesson, index)}</p></div></article>`).join("")}</div>
     </div>
   </section>`;
 }
@@ -746,12 +739,31 @@ function decisionQuestion(module, lesson, index) {
   ][index];
 }
 
+function sourceReadingHTML(module, lesson) {
+  const dossier = sourceDossiers[module.id];
+  const lessonIndex = module.lessons.findIndex((item) => item.id === lesson.id);
+  const chapter = dossier.chapters[lessonIndex];
+  return `<section class="reading-section source-chapter" id="source-reading">
+    <header class="source-chapter-heading">
+      <div><span class="reading-kicker">SOURCE-GROUNDED TEXTBOOK</span><h2>${chapter.heading}</h2></div>
+      <span class="source-depth"><i class="ph ph-books" aria-hidden="true"></i>${dossier.sources.length} source trails</span>
+    </header>
+    <p class="lead-paragraph source-body">${chapter.body}</p>
+    <div class="source-note-grid">
+      <div><small>CASEBOOK NOTES</small><ul>${chapter.notes.map((note) => `<li><i class="ph ph-check-circle" aria-hidden="true"></i><span>${note}</span></li>`).join("")}</ul></div>
+      <aside><small>TRANSFER EXAMPLE</small><p>${chapter.case}</p></aside>
+    </div>
+    <div class="page-citations"><b><i class="ph ph-book-open" aria-hidden="true"></i> Read the mapped pages</b>${dossier.sources.map((source) => `<span>${source}</span>`).join("")}</div>
+  </section>`;
+}
+
 function renderLearn(reopenSyllabus = false) {
   const module = currentModule();
   const lesson = currentLesson();
   const course = courses.find((item) => item.id === module.course);
   const key = lessonKey(module.id, lesson.id);
   const lessonIndex = module.lessons.findIndex((item) => item.id === lesson.id);
+  const dossier = sourceDossiers[module.id];
   const sources = module.sources.map((id) => sourceLibrary[id]).filter(Boolean);
   appRoot.innerHTML = `
     <div class="learning-layout">
@@ -781,33 +793,31 @@ function renderLearn(reopenSyllabus = false) {
 
             ${lessonBriefHTML(module, lesson)}
 
-            <nav class="article-toc" aria-label="On this page"><b>In this lesson</b><a href="#learn/${module.id}/${lesson.id}/objectives">Objectives</a><a href="#learn/${module.id}/${lesson.id}/core-concept">Core concept</a><a href="#learn/${module.id}/${lesson.id}/evidence-stack">Evidence</a><a href="#learn/${module.id}/${lesson.id}/decision-shift">Decision shift</a><a href="#learn/${module.id}/${lesson.id}/playbook">Playbook</a><a href="#learn/${module.id}/${lesson.id}/case">Case</a><a href="#learn/${module.id}/${lesson.id}/practice-task">Practice</a><a href="#learn/${module.id}/${lesson.id}/evaluation">Evaluation</a></nav>
+            <nav class="article-toc" aria-label="On this page"><b>In this lesson</b><a href="#learn/${module.id}/${lesson.id}/objectives">Objectives</a><a href="#learn/${module.id}/${lesson.id}/source-reading">Textbook</a><a href="#learn/${module.id}/${lesson.id}/core-concept">Framework</a><a href="#learn/${module.id}/${lesson.id}/playbook">Method</a><a href="#learn/${module.id}/${lesson.id}/case">Case</a><a href="#learn/${module.id}/${lesson.id}/practice-task">Practice</a><a href="#learn/${module.id}/${lesson.id}/evaluation">Evaluation</a></nav>
 
             <section class="reading-section" id="objectives">
               <span class="reading-kicker">LEARNING OBJECTIVES</span><h2>What you will learn</h2>
               <ul class="objective-list">${lesson.keyMoves.map((move) => `<li><i class="ph ph-check-circle" aria-hidden="true"></i>${move}</li>`).join("")}</ul>
             </section>
 
+            ${sourceReadingHTML(module, lesson)}
+
             <section class="reading-section" id="core-concept">
-              <span class="reading-kicker">CORE CONCEPT</span><h2>${module.framework}</h2>
+              <span class="reading-kicker">DECISION FRAMEWORK</span><h2>${module.framework}</h2>
               <p class="lead-paragraph">${module.frameworkDefinition}</p>
               <div class="concept-grid">
-                ${lesson.keyMoves.map((move, index) => `<article><span>0${index + 1}</span><h3>${move}</h3><p>${conceptExplanation(module, lesson, index)}</p></article>`).join("")}
+                ${lesson.keyMoves.map((move, index) => `<article><span>0${index + 1}</span><h3>${move}</h3><p>${dossier.chapters[lessonIndex].notes[index]}</p></article>`).join("")}
               </div>
-              <aside class="key-idea"><span><i class="ph ph-lightbulb" aria-hidden="true"></i> KEY IDEA</span><p>Frameworks create coverage, not certainty. Use <b>${module.framework}</b> to expose the reasoning, then let evidence, constraints, and product judgment determine the choice.</p></aside>
+              <aside class="key-idea"><span><i class="ph ph-lightbulb" aria-hidden="true"></i> DECISION RULE</span><p>${decisionQuestion(module, lesson, lessonIndex % 3)}</p></aside>
             </section>
 
-            ${evidenceStackHTML(module, lesson)}
-
-            ${practiceShiftHTML(module, lesson)}
-
             <section class="reading-section" id="playbook">
-              <span class="reading-kicker">FIELD PLAYBOOK</span><h2>How to apply it</h2>
-              <div class="playbook-steps">${module.steps.map((step, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h3>${step}</h3><p>${stepExplanation(index)}</p></div></article>`).join("")}</div>
+              <span class="reading-kicker">FIELD METHOD</span><h2>Apply it in five moves</h2>
+              <div class="playbook-steps concise-playbook">${module.steps.map((step, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h3>${step}</h3></div></article>`).join("")}</div>
             </section>
 
             <section class="reading-section" id="case">
-              <span class="reading-kicker">WORKED CASE</span><h2>See the reasoning in action</h2>
+              <span class="reading-kicker">WORKED MODULE CASE</span><h2>Connect this lesson to the full decision</h2>
               <div class="case-study"><div class="case-label"><span>CASE</span><b>${module.title}</b></div><p>${module.caseStudy}</p></div>
               <div class="two-column-reading"><div><h3><i class="ph ph-check-circle" aria-hidden="true"></i> Quality checklist</h3><ul>${module.checklist.map((item) => `<li><i class="ph ph-check-circle" aria-hidden="true"></i>${item}</li>`).join("")}</ul></div><div class="pitfall-box"><h3><i class="ph ph-warning-circle" aria-hidden="true"></i> Common failure modes</h3><ul>${module.pitfalls.map((item) => `<li><i class="ph ph-x-circle" aria-hidden="true"></i>${item}</li>`).join("")}</ul></div></div>
             </section>
@@ -820,8 +830,10 @@ function renderLearn(reopenSyllabus = false) {
             ${lessonEvaluationHTML(module, lesson)}
 
             <section class="reading-section sources-reading">
-              <span class="reading-kicker">GO DEEPER</span><h2>Sources for this module</h2>
-              <div>${sources.map((source) => source.url ? `<a href="${source.url}" target="_blank" rel="noreferrer"><i class="ph ph-arrow-square-out" aria-hidden="true"></i><b>${source.name}</b><small>${source.type}</small></a>` : `<article><i class="ph ph-books" aria-hidden="true"></i><b>${source.name}</b><small>${source.type} · used for synthesis, not redistributed</small></article>`).join("")}</div>
+              <span class="reading-kicker">SOURCE LIBRARY</span><h2>Continue into the original material</h2>
+              <p class="section-intro">The textbook chapter above is an original synthesis. Page trails identify where the local PDFs develop the topic; source material is not reproduced.</p>
+              <div class="source-page-trail">${dossier.sources.map((source) => `<span><i class="ph ph-book-open" aria-hidden="true"></i>${source}</span>`).join("")}</div>
+              <div class="source-list">${sources.map((source) => source.url ? `<a href="${source.url}" target="_blank" rel="noreferrer"><i class="ph ph-arrow-square-out" aria-hidden="true"></i><b>${source.name}</b><small>${source.type}</small></a>` : `<article><i class="ph ph-books" aria-hidden="true"></i><b>${source.name}</b><small>${source.type} · used for synthesis, not redistributed</small></article>`).join("")}</div>
             </section>
 
             <footer class="lesson-footer-nav">
@@ -881,6 +893,9 @@ function evidenceStackHTML(module, lesson) {
 }
 
 function lessonEvaluationQuestions(module, lesson) {
+  const dossier = sourceDossiers[module.id];
+  const lessonIndex = module.lessons.findIndex((item) => item.id === lesson.id);
+  const chapter = dossier.chapters[lessonIndex];
   return [
     {
       q: module.check.q,
@@ -889,15 +904,15 @@ function lessonEvaluationQuestions(module, lesson) {
       rationale: `The correct response preserves the central principle of ${module.framework}: product work must connect evidence and judgment to customer and business value, not merely produce activity or documentation.`,
     },
     {
-      q: `Which use of “${lesson.artifact}” would create the strongest product decision?`,
+      q: `Which action best applies the source chapter “${chapter.heading}”?`,
       options: [
-        `Use it as an operating record that connects ${lesson.keyMoves[0].toLowerCase()} to evidence, tradeoffs, an owner, and a review trigger.`,
-        "Polish it until every stakeholder agrees with the wording and visual format.",
-        "Use it to lock requirements so the team cannot revisit assumptions during delivery.",
-        "Treat it as proof that the requested solution is already validated.",
+        chapter.notes[0],
+        "Begin with the preferred feature and use research mainly to refine its presentation.",
+        "Remove uncertainty from the document so stakeholders see a single confident answer.",
+        "Delay measurement and edge-case work until the complete solution has launched.",
       ],
       a: 0,
-      rationale: `The artifact is valuable when it improves a real decision and remains revisable. It should expose assumptions, alternatives, evidence, responsibility, and the condition for changing course.`,
+      rationale: `${chapter.notes[0]} The source synthesis develops this principle through the example: ${chapter.case}`,
     },
     {
       q: `A team completes ${lesson.artifact.toLowerCase()} but cannot explain the rejected alternative or the evidence that would change its mind. What should happen next?`,
@@ -1218,7 +1233,7 @@ document.querySelector("#globalSearch").addEventListener("submit", (event) => { 
 document.querySelector("#searchInput").addEventListener("input", (event) => {
   const query = event.target.value.trim().toLowerCase(); const results = document.querySelector("#searchResults");
   if (query.length < 2) { results.hidden = true; return; }
-  const matches = modules.flatMap((module) => module.lessons.map((lesson) => ({ module, lesson }))).filter(({ module, lesson }) => `${module.title} ${module.summary} ${lesson.title} ${lesson.summary} ${lesson.keyMoves.join(" ")}`.toLowerCase().includes(query)).slice(0, 8);
+  const matches = modules.flatMap((module) => module.lessons.map((lesson, lessonIndex) => ({ module, lesson, chapter: sourceDossiers[module.id].chapters[lessonIndex] }))).filter(({ module, lesson, chapter }) => `${module.title} ${module.summary} ${lesson.title} ${lesson.summary} ${lesson.keyMoves.join(" ")} ${chapter.heading} ${chapter.body} ${chapter.notes.join(" ")} ${chapter.case}`.toLowerCase().includes(query)).slice(0, 8);
   results.innerHTML = matches.length ? matches.map(({ module, lesson }) => `<a href="#learn/${module.id}/${lesson.id}"><span>MODULE ${module.number}</span><b>${lesson.title}</b><small>${module.title}</small></a>`).join("") : `<p>No lesson found. Try “metrics,” “strategy,” “AI,” or “research.”</p>`;
   results.hidden = false;
 });

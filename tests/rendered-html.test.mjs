@@ -37,10 +37,11 @@ test("server-renders the finished course shell and metadata", async () => {
 });
 
 test("ships a self-contained GitHub Pages course", async () => {
-  const [html, css, js, iconCss, iconFont, socialImage] = await Promise.all([
+  const [html, css, js, sourceNotes, iconCss, iconFont, socialImage] = await Promise.all([
     readFile(new URL("../docs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../docs/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../docs/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../docs/source-notes.js", import.meta.url), "utf8"),
     readFile(new URL("../docs/icons/phosphor.css", import.meta.url), "utf8"),
     stat(new URL("../docs/icons/Phosphor.woff2", import.meta.url)),
     stat(new URL("../docs/og-v2.png", import.meta.url)),
@@ -58,12 +59,18 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.doesNotMatch(html, /id="exploreButton"|id="mobileMenuButton"|id="mobileNav"/);
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
+  assert.match(html, /source-notes\.js/);
   assert.match(html, /og-v2\.png/);
 
   const moduleIds = [...js.matchAll(/id: "m\d{2}"/g)];
   assert.equal(moduleIds.length, 24);
   const lessonIds = [...js.matchAll(/L\("l\d{2}"/g)];
   assert.equal(lessonIds.length, 96);
+  assert.equal([...sourceNotes.matchAll(/^  m\d{2}: \{/gm)].length, 24);
+  assert.equal([...sourceNotes.matchAll(/heading: "/g)].length, 96);
+  assert.match(sourceNotes, /FMS pp\. 9–14/);
+  assert.match(sourceNotes, /XLRI pp\. 47–88, 127–224/);
+  assert.match(sourceNotes, /original teaching syntheses/);
   assert.match(js, /localStorage/);
   assert.match(js, /quizQuestions/);
   assert.match(js, /flashcards/);
@@ -72,8 +79,7 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(js, /startTimer/);
   assert.match(js, /templateText/);
   assert.match(js, /lessonBriefHTML/);
-  assert.match(js, /evidenceStackHTML/);
-  assert.match(js, /practiceShiftHTML/);
+  assert.match(js, /sourceReadingHTML/);
   assert.match(js, /lessonEvaluationHTML/);
   assert.match(js, /evaluationReady/);
   assert.match(js, /pc-lesson-evaluations/);
@@ -91,7 +97,8 @@ test("ships a self-contained GitHub Pages course", async () => {
 
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.lesson-brief/);
-  assert.match(css, /\.decision-shift-grid/);
+  assert.match(css, /\.source-chapter/);
+  assert.match(css, /\.source-note-grid/);
   assert.match(css, /\.lesson-evaluation/);
   assert.match(css, /\.evidence-table/);
   assert.match(css, /\.learning-layout \{ min-height:/);
