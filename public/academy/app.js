@@ -563,8 +563,6 @@ const state = {
   completed: new Set(readJSON("pc-completed", [])),
   bookmarks: new Set(readJSON("pc-bookmarks", [])),
   notes: readJSON("pc-notes", {}),
-  enrolled: localStorage.getItem("pc-enrolled") === "true",
-  savedProgram: localStorage.getItem("pc-saved-program") === "true",
   currentModule: localStorage.getItem("pc-current-module") || "m01",
   currentLesson: localStorage.getItem("pc-current-lesson") || "l01",
   openCourses: new Set(["c1"]),
@@ -574,6 +572,9 @@ const state = {
   quizAnswers: readJSON("pc-quiz-answers", {}),
   checks: readJSON("pc-checks", {}),
   draftedProjects: new Set(readJSON("pc-drafted-projects", [])),
+  lessonEvaluations: readJSON("pc-lesson-evaluations", {}),
+  evaluationResponses: readJSON("pc-evaluation-responses", {}),
+  evaluationRubrics: readJSON("pc-evaluation-rubrics", {}),
   flashIndex: 0,
   flashFlipped: false,
   flashRatings: readJSON("pc-flash-ratings", {}),
@@ -595,13 +596,14 @@ function saveState() {
   localStorage.setItem("pc-completed", JSON.stringify([...state.completed]));
   localStorage.setItem("pc-bookmarks", JSON.stringify([...state.bookmarks]));
   localStorage.setItem("pc-notes", JSON.stringify(state.notes));
-  localStorage.setItem("pc-enrolled", String(state.enrolled));
-  localStorage.setItem("pc-saved-program", String(state.savedProgram));
   localStorage.setItem("pc-current-module", state.currentModule);
   localStorage.setItem("pc-current-lesson", state.currentLesson);
   localStorage.setItem("pc-quiz-answers", JSON.stringify(state.quizAnswers));
   localStorage.setItem("pc-checks", JSON.stringify(state.checks));
   localStorage.setItem("pc-drafted-projects", JSON.stringify([...state.draftedProjects]));
+  localStorage.setItem("pc-lesson-evaluations", JSON.stringify(state.lessonEvaluations));
+  localStorage.setItem("pc-evaluation-responses", JSON.stringify(state.evaluationResponses));
+  localStorage.setItem("pc-evaluation-rubrics", JSON.stringify(state.evaluationRubrics));
   localStorage.setItem("pc-flash-ratings", JSON.stringify(state.flashRatings));
   localStorage.setItem("pc-case-scores", JSON.stringify(state.caseScores));
   localStorage.setItem("pc-case-recommendation", state.caseRecommendation);
@@ -617,6 +619,7 @@ function courseModules(courseId) { return modules.filter((module) => module.cour
 function moduleProgress(module) { return module.lessons.filter((lesson) => state.completed.has(lessonKey(module.id, lesson.id))).length; }
 function moduleArtifactProgress(module) { return module.lessons.filter((lesson) => state.draftedProjects.has(lessonKey(module.id, lesson.id))).length; }
 function completedModuleProjects() { return modules.filter((module) => moduleArtifactProgress(module) === module.lessons.length).length; }
+function completedLessonEvaluations() { return modules.reduce((count, module) => count + module.lessons.filter((lesson) => evaluationReady(module, lesson)).length, 0); }
 function correctQuizAnswers() { return Object.entries(state.quizAnswers).filter(([id, answer]) => quizQuestions.find((question) => question.id === id)?.a === answer).length; }
 function courseProgress(courseId) {
   const scoped = courseModules(courseId);
@@ -626,11 +629,12 @@ function courseProgress(courseId) {
 function totalProgress() { return Math.round((state.completed.size / totalLessons) * 100); }
 function certificateProgress() {
   const lessonScore = state.completed.size / totalLessons;
+  const evaluationScore = completedLessonEvaluations() / totalLessons;
   const projectScore = completedModuleProjects() / modules.length;
   const quizScore = correctQuizAnswers() / quizQuestions.length;
-  return Math.round((lessonScore * 0.7 + projectScore * 0.2 + quizScore * 0.1) * 100);
+  return Math.round((lessonScore * 0.5 + evaluationScore * 0.2 + projectScore * 0.2 + quizScore * 0.1) * 100);
 }
-function certificateReady() { return state.completed.size === totalLessons && completedModuleProjects() === modules.length && correctQuizAnswers() >= 20; }
+function certificateReady() { return state.completed.size === totalLessons && completedLessonEvaluations() === totalLessons && completedModuleProjects() === modules.length && correctQuizAnswers() >= 20; }
 function todayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 function logPractice() {
   const today = todayKey();
@@ -653,9 +657,12 @@ function showToast(message) {
 }
 
 function getRoute() {
-  const hash = location.hash.replace(/^#/, "") || "overview";
+  const hash = location.hash.replace(/^#/, "");
+  if (!hash || hash === "overview") return { view: "learn", module: state.currentModule, lesson: state.currentLesson };
+  if (["objectives", "core-concept", "evidence-stack", "decision-shift", "playbook", "case", "practice-task", "evaluation"].includes(hash)) return { view: "learn", module: state.currentModule, lesson: state.currentLesson, section: hash };
   const parts = hash.split("/");
-  return { view: parts[0], module: parts[1], lesson: parts[2] };
+  if (parts[0] === "learn") return { view: "learn", module: parts[1] || state.currentModule, lesson: parts[2] || state.currentLesson, section: parts[3] };
+  return { view: parts[0], module: parts[1], lesson: parts[2], section: parts[3] };
 }
 
 function updateNav(view) {
@@ -673,130 +680,16 @@ function render() {
     saveState();
   }
   updateNav(route.view);
-  if (route.view === "learn") renderLearn();
+  if (route.view === "learn") {
+    renderLearn();
+    if (route.section) window.requestAnimationFrame(() => document.querySelector(`#${CSS.escape(route.section)}`)?.scrollIntoView());
+  }
   else if (route.view === "practice") renderPractice();
   else if (route.view === "grades") renderGrades();
-  else renderOverview();
+  else renderLearn();
   const initials = state.profile.name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "PM";
   document.querySelector("#profileButton").textContent = initials;
   document.querySelector("#mainContent")?.focus({ preventScroll: true });
-}
-
-function renderOverview() {
-  const progress = totalProgress();
-  appRoot.innerHTML = `
-    <section class="program-hero">
-      <div class="hero-breadcrumb"><a href="#overview">Professional Certificates</a><span>/</span>Product Management</div>
-      <div class="hero-grid page-width">
-        <div class="hero-content">
-          <div class="provider-line"><span class="provider-mark">PC</span><span>ProductCraft Academy</span></div>
-          <h1>Product Management<br />Professional Certificate</h1>
-          <p class="hero-subtitle">Master the full product craft—from customer discovery and strategy to analytics, execution, leadership, and AI. Learn the concepts, do the work, and leave with a portfolio.</p>
-          <div class="hero-trust">
-            <span><b>Beginner to advanced</b></span><span>•</span><span>No prior PM experience required</span>
-          </div>
-          <div class="hero-actions">
-            <button class="primary-button large" data-action="enroll">${state.enrolled ? `Resume learning — ${progress}%` : "Enroll and start learning"}</button>
-            <button class="save-program-button ${state.savedProgram ? "saved" : ""}" data-action="save-program"><i class="ph ${state.savedProgram ? "ph-heart" : "ph-heart-straight"}" aria-hidden="true"></i> ${state.savedProgram ? "Saved" : "Save"}</button>
-          </div>
-          <small class="honesty-note">Free, self-paced learning experience. The completion certificate is issued by ProductCraft and is not an accredited degree.</small>
-        </div>
-        <aside class="enrollment-card">
-          <div class="course-preview">
-            <span class="preview-label">YOUR LEARNING PATH</span>
-            <div class="preview-stack">
-              ${courses.slice(0, 4).map((course) => `<i style="--course-color:${course.color}">${course.number}</i>`).join("")}
-              <b>+2</b>
-            </div>
-            <strong>From first principle<br />to product leadership.</strong>
-          </div>
-          <div class="enrollment-details">
-            <h2>${state.enrolled ? "Continue your certificate" : "Start learning today"}</h2>
-            <ul><li><i class="ph ph-check-circle" aria-hidden="true"></i> 6 applied courses</li><li><i class="ph ph-check-circle" aria-hidden="true"></i> 24 modules · 96 lessons</li><li><i class="ph ph-check-circle" aria-hidden="true"></i> 24 projects and templates</li><li><i class="ph ph-check-circle" aria-hidden="true"></i> Practice labs and interview drills</li></ul>
-            <button class="primary-button full" data-action="enroll">${state.enrolled ? "Go to current lesson" : "Enroll now"}</button>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <div class="program-stats">
-      <div class="page-width stats-grid"><span><b>122 hours</b><small>at your own pace</small></span><span><b>6 courses</b><small>one complete pathway</small></span><span><b>96 lessons</b><small>with knowledge checks</small></span><span><b>24 projects</b><small>portfolio-focused work</small></span></div>
-    </div>
-
-    <nav class="program-tabs" aria-label="Program sections"><div class="page-width"><a href="#about">About</a><a href="#outcomes">Outcomes</a><a href="#syllabus">Courses</a><a href="#projects">Projects</a><a href="#sources">Sources</a></div></nav>
-
-    <div class="program-body page-width">
-      <div class="program-main">
-        <section class="content-section" id="about">
-          <span class="section-kicker">PROFESSIONAL CERTIFICATE</span>
-          <h2>A complete operating system for product work</h2>
-          <p class="section-lede">Most PM courses teach a dictionary of frameworks. This program teaches the judgment that makes those frameworks useful: how to turn uncertainty into evidence, evidence into a choice, and a shipped product into measurable learning.</p>
-          <div class="audience-grid">
-            <article><span>01</span><h3>Breaking into product</h3><p>Build vocabulary, first-principles understanding, case practice, and portfolio evidence without assuming prior PM experience.</p></article>
-            <article><span>02</span><h3>Working product managers</h3><p>Deepen discovery, strategy, analytics, technical fluency, execution, and stakeholder decision quality.</p></article>
-            <article><span>03</span><h3>Product leaders</h3><p>Strengthen portfolio choices, empowered teams, platform thinking, coaching, and AI-era product governance.</p></article>
-          </div>
-        </section>
-
-        <section class="content-section" id="outcomes">
-          <span class="section-kicker">WHAT YOU WILL BE ABLE TO DO</span>
-          <h2>Build products with evidence and intent</h2>
-          <div class="outcome-list">
-            ${[
-              ["Discover the right problem", "Plan research, conduct non-leading interviews, synthesize evidence, and size the cost of the status quo."],
-              ["Make a product strategy", "Turn customer, market, technology, and business insight into choices that guide what you will—and will not—build."],
-              ["Design a measurement system", "Create North Stars, input metrics, guardrails, funnels, cohorts, experiments, and root-cause analyses."],
-              ["Ship and operate responsibly", "Write usable product briefs, reason about technical systems, stage releases, monitor quality, and plan recovery."],
-              ["Lead products and teams", "Allocate across a portfolio, shape empowered teams, influence decisions, coach judgment, and build trustworthy AI products."],
-            ].map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h3>${title}</h3><p>${copy}</p></div></article>`).join("")}
-          </div>
-        </section>
-
-        <section class="content-section" id="syllabus">
-          <span class="section-kicker">PROGRAM SYLLABUS</span>
-          <h2>Six courses. One integrated craft.</h2>
-          <p class="section-lede">Each course contains four modules. Every module combines lesson reading, an applied example, a decision tool, a knowledge check, and a portfolio artifact.</p>
-          <div class="course-sequence">
-            ${courses.map((course) => {
-              const scoped = courseModules(course.id);
-              return `<article class="sequence-card">
-                <button class="sequence-header" type="button" data-action="toggle-overview-course" data-course="${course.id}" aria-expanded="${course.id === "c1"}">
-                  <span class="course-number" style="--course-color:${course.color}">${course.number}</span>
-                  <span class="sequence-title"><small>COURSE ${course.number} · ${course.level}</small><strong>${course.title}</strong><em>${course.description}</em></span>
-                  <span class="sequence-meta"><b>${course.hours} hours</b><i class="ph ph-caret-down" aria-hidden="true"></i></span>
-                </button>
-                <div class="sequence-content" ${course.id === "c1" ? "" : "hidden"} data-overview-course="${course.id}">
-                  ${scoped.map((module) => `<a href="#learn/${module.id}/${module.lessons[0].id}"><span>${String(module.number).padStart(2, "0")}</span><div><b>${module.title}</b><small>${module.duration} · 4 lessons · ${module.project}</small></div><i class="ph ph-arrow-right" aria-hidden="true"></i></a>`).join("")}
-                </div>
-              </article>`;
-            }).join("")}
-          </div>
-        </section>
-
-        <section class="content-section" id="projects">
-          <span class="section-kicker">LEARN BY DOING</span>
-          <h2>Leave with proof of judgment</h2>
-          <div class="project-showcase">
-            <article class="featured-project"><small>FINAL CAPSTONE</small><h3>Zero-to-launch product case</h3><p>Conduct discovery, make a strategy, validate a concept, design metrics, write a product brief, plan rollout and GTM, and present the case in a portfolio-ready narrative.</p><a href="#learn/m24/l01">View capstone requirements <i class="ph ph-arrow-right" aria-hidden="true"></i></a></article>
-            <div class="mini-projects"><article><i class="ph ph-magnifying-glass" aria-hidden="true"></i><b>Evidence brief</b><small>Research + synthesis</small></article><article><i class="ph ph-compass" aria-hidden="true"></i><b>Strategy memo</b><small>Choices + non-goals</small></article><article><i class="ph ph-chart-line-up" aria-hidden="true"></i><b>Metric tree</b><small>North Star + guardrails</small></article><article><i class="ph ph-brain" aria-hidden="true"></i><b>AI eval spec</b><small>Cases + release gates</small></article></div>
-          </div>
-        </section>
-
-        <section class="content-section source-section" id="sources">
-          <span class="section-kicker">SOURCE-GROUNDED CURRICULUM</span>
-          <h2>Built from primary research and rich casebooks</h2>
-          <p class="section-lede">The curriculum synthesizes your local IIM, MDI, BITSoM, interview, and metrics study library with original sources from Google Research, GOV.UK, SVPG, DORA, W3C, NIST, Scrum, AWS, and Microsoft. Private PDFs are referenced but not redistributed.</p>
-          <div class="source-grid">
-            ${Object.values(sourceLibrary).slice(0, 18).map((source) => source.url ? `<a href="${source.url}" target="_blank" rel="noreferrer"><small>${source.type}</small><b>${source.name}</b><span>Open source <i class="ph ph-arrow-square-out" aria-hidden="true"></i></span></a>` : `<article><small>${source.type}</small><b>${source.name}</b><span>Referenced locally</span></article>`).join("")}
-          </div>
-        </section>
-      </div>
-
-      <aside class="program-aside">
-        <div class="aside-card"><small>THIS PROGRAM INCLUDES</small><ul><li><i class="ph ph-book-open-text" aria-hidden="true"></i> 96 detailed lessons</li><li><i class="ph ph-briefcase" aria-hidden="true"></i> 24 portfolio projects</li><li><i class="ph ph-check-square" aria-hidden="true"></i> 24 module checks</li><li><i class="ph ph-cards" aria-hidden="true"></i> 24 flashcards</li><li><i class="ph ph-microphone-stage" aria-hidden="true"></i> Interview simulator</li><li><i class="ph ph-certificate" aria-hidden="true"></i> Completion certificate</li></ul></div>
-        <div class="aside-card"><small>YOUR LEARNING PLAN</small><b class="aside-big">${escapeHTML(state.profile.goal)} hours / week</b><p>${escapeHTML(state.profile.level)} · progress, practice, projects, and notes stay on this device.</p><button class="text-button" data-action="open-profile">Edit learning plan</button></div>
-      </aside>
-    </div>`;
 }
 
 function syllabusHTML() {
@@ -875,7 +768,7 @@ function renderLearn() {
     <div class="learning-layout">
       <aside class="learning-sidebar" aria-label="Course syllabus">
         <div class="learning-sidebar-top">
-          <a href="#overview"><i class="ph ph-arrow-left" aria-hidden="true"></i> Program overview</a>
+          <a href="#learn"><i class="ph ph-book-open-text" aria-hidden="true"></i> Course contents</a>
           <div class="overall-progress"><span><b>${totalProgress()}%</b> certificate progress</span><div><i style="width:${totalProgress()}%"></i></div><small>${state.completed.size} of ${totalLessons} lessons complete</small></div>
         </div>
         <div class="syllabus-scroll">${syllabusHTML()}</div>
@@ -891,14 +784,14 @@ function renderLearn() {
         <div class="lesson-content-wrap">
           <article class="lesson-article">
             <div class="lesson-heading">
-              <div class="lesson-badges"><span><i class="ph ph-book-open-text" aria-hidden="true"></i> Lesson ${lessonIndex + 1} of 4</span><span><i class="ph ph-clock" aria-hidden="true"></i> ${lesson.minutes} min</span><span><i class="ph ph-pencil-line" aria-hidden="true"></i> Reading + practice</span></div>
+              <div class="lesson-badges"><span><i class="ph ph-book-open-text" aria-hidden="true"></i> Lesson ${lessonIndex + 1} of 4</span><span><i class="ph ph-clock" aria-hidden="true"></i> ${lesson.minutes} min</span><span><i class="ph ph-pencil-line" aria-hidden="true"></i> Reading + practice</span><span><i class="ph ph-exam" aria-hidden="true"></i> Graded evaluation</span></div>
               <h1>${lesson.title}</h1>
               <p>${lesson.summary}</p>
             </div>
 
             ${lessonBriefHTML(module, lesson)}
 
-            <nav class="article-toc" aria-label="On this page"><b>In this lesson</b><a href="#objectives">Objectives</a><a href="#core-concept">Core concept</a><a href="#decision-shift">Decision shift</a><a href="#playbook">Playbook</a><a href="#case">Case</a><a href="#practice-task">Practice</a><a href="#knowledge-check">Check</a></nav>
+            <nav class="article-toc" aria-label="On this page"><b>In this lesson</b><a href="#learn/${module.id}/${lesson.id}/objectives">Objectives</a><a href="#learn/${module.id}/${lesson.id}/core-concept">Core concept</a><a href="#learn/${module.id}/${lesson.id}/evidence-stack">Evidence</a><a href="#learn/${module.id}/${lesson.id}/decision-shift">Decision shift</a><a href="#learn/${module.id}/${lesson.id}/playbook">Playbook</a><a href="#learn/${module.id}/${lesson.id}/case">Case</a><a href="#learn/${module.id}/${lesson.id}/practice-task">Practice</a><a href="#learn/${module.id}/${lesson.id}/evaluation">Evaluation</a></nav>
 
             <section class="reading-section" id="objectives">
               <span class="reading-kicker">LEARNING OBJECTIVES</span><h2>What you will learn</h2>
@@ -913,6 +806,8 @@ function renderLearn() {
               </div>
               <aside class="key-idea"><span><i class="ph ph-lightbulb" aria-hidden="true"></i> KEY IDEA</span><p>Frameworks create coverage, not certainty. Use <b>${module.framework}</b> to expose the reasoning, then let evidence, constraints, and product judgment determine the choice.</p></aside>
             </section>
+
+            ${evidenceStackHTML(module, lesson)}
 
             ${practiceShiftHTML(module, lesson)}
 
@@ -932,10 +827,7 @@ function renderLearn() {
               <div class="assignment-card ${state.draftedProjects.has(key) ? "drafted" : ""}"><div class="assignment-icon"><i class="ph ${state.draftedProjects.has(key) ? "ph-check-circle" : "ph-pencil-line"}" aria-hidden="true"></i></div><div><small>${lesson.minutes}–90 MINUTES · PORTFOLIO PRACTICE</small><h3>${lesson.artifact}</h3><p>${lesson.practice}</p><div class="assignment-actions"><button class="primary-button" data-action="download-template"><i class="ph ph-download-simple" aria-hidden="true"></i> Download working template</button><button class="secondary-button" data-action="mark-project"><i class="ph ${state.draftedProjects.has(key) ? "ph-check-circle" : "ph-circle"}" aria-hidden="true"></i> ${state.draftedProjects.has(key) ? "Artifact drafted" : "Mark artifact drafted"}</button></div></div></div>
             </section>
 
-            <section class="reading-section" id="knowledge-check">
-              <span class="reading-kicker">KNOWLEDGE CHECK</span><h2>Test the decision</h2>
-              ${knowledgeCheckHTML(module)}
-            </section>
+            ${lessonEvaluationHTML(module, lesson)}
 
             <section class="reading-section sources-reading">
               <span class="reading-kicker">GO DEEPER</span><h2>Sources for this module</h2>
@@ -953,6 +845,7 @@ function renderLearn() {
             <div class="rail-progress"><div class="circle-progress" style="--progress:${moduleProgress(module) * 25}"><span>${moduleProgress(module)}/4</span></div><div><b>Module progress</b><small>${module.duration}</small></div></div>
             <div class="rail-card"><div><b>Your notes</b><button data-action="show-notes">View all</button></div><textarea id="lessonNote" placeholder="Capture an idea, question, or example…">${escapeHTML(note)}</textarea><small>Saved automatically on this device</small></div>
             <div class="rail-card"><b>Module project · ${moduleArtifactProgress(module)}/4 artifacts</b><h3>${module.project}</h3><p>Complete the four lesson artifacts, then combine them into this module deliverable.</p><a href="#grades">View project status <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
+            <div class="rail-card evaluation-rail"><b>Lesson evaluation</b><h3>${lessonEvaluationScore(module, lesson)}/3 correct</h3><p>${evaluationReady(module, lesson) ? "Mastery evidence recorded for this lesson." : "Answer three questions, write an applied response, and complete the self-review."}</p><a href="#learn/${module.id}/${lesson.id}/evaluation">${evaluationReady(module, lesson) ? "Review evaluation" : "Continue evaluation"} <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
             <div class="rail-card next-up"><small>NEXT UP</small>${nextLessonLink(module, lesson, true) || `<b>Course review</b><a href="#grades">See your grades <i class="ph ph-arrow-right" aria-hidden="true"></i></a>`}</div>
           </aside>
         </div>
@@ -978,6 +871,91 @@ function practiceShiftHTML(module, lesson) {
       <article class="after-shift"><header><i class="ph ph-check-circle" aria-hidden="true"></i><div><small>AFTER</small><h3>Evidence connected to action</h3></div></header><ul>${module.checklist.slice(0, 3).map((item) => `<li><i class="ph ph-check" aria-hidden="true"></i><span>${item}</span></li>`).join("")}</ul></article>
     </div>
     <aside class="transfer-prompt"><i class="ph ph-arrow-bend-down-right" aria-hidden="true"></i><div><b>Transfer prompt</b><p>Where in your current product could you apply “${lesson.keyMoves[0]}” this week? Identify the meeting, decision owner, missing evidence, and concrete change you want the team to make.</p></div></aside>
+  </section>`;
+}
+
+function evidenceStackHTML(module, lesson) {
+  const rows = [
+    ["Direct customer evidence", `Observe the workflow behind “${lesson.keyMoves[0]}” and ask for a recent concrete example.`, "Interview notes tied to actual behavior, frequency, context, and workaround.", "Only opinions, hypotheticals, or stakeholder summaries are available."],
+    ["Behavioral evidence", `Find the event, funnel step, cohort, or operational trace that would validate ${lesson.artifact.toLowerCase()}.`, "A baseline with a defined population, time window, comparison, and known data limits.", "Averages hide segments, instrumentation is incomplete, or correlation is treated as causation."],
+    ["Business evidence", `Explain how the customer change connects to revenue, retention, cost, risk, or strategic advantage in ${module.title.toLowerCase()}.`, "A quantified mechanism with assumptions, sensitivity, and an accountable owner.", "The business case depends on an unexplained multiplier or vanity metric."],
+    ["Constraint evidence", `Test feasibility, accessibility, privacy, safety, operations, and adoption before commitment.`, "A thin technical or service spike plus explicit guardrails and a recovery path.", "The plan works only in the happy path or transfers cost to another user or team."],
+  ];
+  return `<section class="reading-section" id="evidence-stack">
+    <span class="reading-kicker">DECISION-GRADE EVIDENCE</span><h2>Build an evidence stack, not a persuasive story</h2>
+    <p class="section-intro">Strong product judgment triangulates different kinds of proof. No single interview, dashboard, framework score, or executive opinion is sufficient on its own. Use this matrix to stress-test the reasoning behind <strong>${lesson.artifact}</strong>.</p>
+    <div class="evidence-table" role="table" aria-label="Evidence quality matrix">
+      <div class="evidence-row evidence-head" role="row"><b role="columnheader">Evidence lens</b><b role="columnheader">Question to investigate</b><b role="columnheader">Decision-grade proof</b><b role="columnheader">Warning signal</b></div>
+      ${rows.map(([lens, question, proof, warning]) => `<div class="evidence-row" role="row"><b role="cell">${lens}</b><span role="cell">${question}</span><span role="cell">${proof}</span><span role="cell">${warning}</span></div>`).join("")}
+    </div>
+    <aside class="evidence-rule"><i class="ph ph-scales" aria-hidden="true"></i><div><b>Evidence rule</b><p>Increase the strength and diversity of evidence in proportion to the cost, irreversibility, and trust risk of the decision. A reversible experiment needs less proof than a platform migration, pricing change, or safety-critical AI release.</p></div></aside>
+  </section>`;
+}
+
+function lessonEvaluationQuestions(module, lesson) {
+  return [
+    {
+      q: module.check.q,
+      options: module.check.options,
+      a: module.check.a,
+      rationale: `The correct response preserves the central principle of ${module.framework}: product work must connect evidence and judgment to customer and business value, not merely produce activity or documentation.`,
+    },
+    {
+      q: `Which use of “${lesson.artifact}” would create the strongest product decision?`,
+      options: [
+        `Use it as an operating record that connects ${lesson.keyMoves[0].toLowerCase()} to evidence, tradeoffs, an owner, and a review trigger.`,
+        "Polish it until every stakeholder agrees with the wording and visual format.",
+        "Use it to lock requirements so the team cannot revisit assumptions during delivery.",
+        "Treat it as proof that the requested solution is already validated.",
+      ],
+      a: 0,
+      rationale: `The artifact is valuable when it improves a real decision and remains revisable. It should expose assumptions, alternatives, evidence, responsibility, and the condition for changing course.`,
+    },
+    {
+      q: `A team completes ${lesson.artifact.toLowerCase()} but cannot explain the rejected alternative or the evidence that would change its mind. What should happen next?`,
+      options: [
+        "Increase the framework score until one option appears objectively superior.",
+        "Document the tradeoff, rejected option, decision owner, and evidence threshold before committing further resources.",
+        "Ask the most senior stakeholder to choose so the team can preserve momentum.",
+        "Proceed with delivery and add the missing reasoning after launch.",
+      ],
+      a: 1,
+      rationale: `A choice is not decision-grade until its tradeoff is explicit. Naming what was rejected and what evidence would reopen the decision makes the work accountable and adaptable.`,
+    },
+  ];
+}
+
+function lessonEvaluationScore(module, lesson) {
+  const answers = state.lessonEvaluations[lessonKey(module.id, lesson.id)] || {};
+  return lessonEvaluationQuestions(module, lesson).filter((question, index) => answers[index] === question.a).length;
+}
+
+function evaluationReady(module, lesson) {
+  const key = lessonKey(module.id, lesson.id);
+  const rubric = state.evaluationRubrics[key] || [];
+  return lessonEvaluationScore(module, lesson) >= 2 && (state.evaluationResponses[key] || "").trim().length >= 120 && rubric.filter(Boolean).length >= 3;
+}
+
+function lessonEvaluationHTML(module, lesson) {
+  const key = lessonKey(module.id, lesson.id);
+  const questions = lessonEvaluationQuestions(module, lesson);
+  const answers = state.lessonEvaluations[key] || {};
+  const response = state.evaluationResponses[key] || "";
+  const rubric = state.evaluationRubrics[key] || [];
+  const score = lessonEvaluationScore(module, lesson);
+  const rubricCount = rubric.filter(Boolean).length;
+  const ready = evaluationReady(module, lesson);
+  const rubricItems = ["Names the decision and owner", "Uses specific evidence, not assertion", "Makes a tradeoff or rejected alternative explicit", "Defines a success signal, guardrail, and review trigger"];
+  return `<section class="reading-section lesson-evaluation" id="evaluation">
+    <div class="evaluation-heading"><div><span class="reading-kicker">LESSON MASTERY EVALUATION</span><h2>Prove you can use the idea</h2><p>Recognition is not mastery. Answer the graded questions, then transfer the lesson to a real product decision and audit your reasoning.</p></div><div class="evaluation-score ${score >= 2 ? "pass" : ""}"><strong>${score}/3</strong><span>${score >= 2 ? "knowledge threshold met" : "2 correct required"}</span></div></div>
+    <div class="evaluation-questions">
+      ${questions.map((question, questionIndex) => {
+        const answered = answers[questionIndex];
+        return `<article class="evaluation-question"><header><span>${String(questionIndex + 1).padStart(2, "0")}</span><div><small>GRADED QUESTION</small><h3>${question.q}</h3></div></header><div class="evaluation-options">${question.options.map((option, optionIndex) => `<button data-action="evaluation-answer" data-question="${questionIndex}" data-answer="${optionIndex}" class="${answered !== undefined ? (optionIndex === question.a ? "correct" : optionIndex === answered ? "incorrect" : "muted") : ""}" ${answered !== undefined ? "disabled" : ""}><span>${String.fromCharCode(65 + optionIndex)}</span><b>${option}</b></button>`).join("")}</div>${answered !== undefined ? `<aside class="evaluation-feedback ${answered === question.a ? "correct" : "incorrect"}"><i class="ph ${answered === question.a ? "ph-check-circle" : "ph-warning-circle"}" aria-hidden="true"></i><div><b>${answered === question.a ? "Correct reasoning" : "Revisit the decision logic"}</b><p>${question.rationale}</p><button class="text-button" data-action="reset-evaluation-question" data-question="${questionIndex}">Try this question again</button></div></aside>` : ""}</article>`;
+      }).join("")}
+    </div>
+    <div class="applied-evaluation"><div><span class="reading-kicker">APPLIED RESPONSE</span><h3>Transfer the lesson to your product</h3><p>Write 120–1,200 characters. Name a live decision, the owner, the strongest evidence, one rejected alternative, the intended outcome, a guardrail, and the condition that would change your recommendation.</p><textarea id="lessonEvaluationResponse" maxlength="1200" placeholder="In my product, the decision is… The evidence shows… We will reject… Success means… We will reconsider if…">${escapeHTML(response)}</textarea><small>${response.trim().length}/120 minimum characters · saved automatically</small></div><aside><b>Decision-quality self-review</b>${rubricItems.map((item, index) => `<label><input type="checkbox" data-action="evaluation-rubric" data-index="${index}" ${rubric[index] ? "checked" : ""} /><span><i class="ph ${rubric[index] ? "ph-check-square" : "ph-square"}" aria-hidden="true"></i>${item}</span></label>`).join("")}</aside></div>
+    <div class="evaluation-result ${ready ? "ready" : ""}"><i class="ph ${ready ? "ph-seal-check" : "ph-gauge"}" aria-hidden="true"></i><div><b>${ready ? "Lesson evaluation complete" : "Complete the mastery evidence"}</b><p>${ready ? "You met the knowledge threshold and recorded an applied, self-reviewed decision response." : `${score}/3 correct · ${response.trim().length}/120 response characters · ${rubricCount}/3 rubric checks.`}</p></div>${Object.keys(answers).length ? `<button class="text-button" data-action="reset-lesson-evaluation">Reset evaluation</button>` : ""}</div>
   </section>`;
 }
 
@@ -1070,9 +1048,9 @@ function renderGrades() {
   const progress = certificateProgress();
   const ready = certificateReady();
   appRoot.innerHTML = `<div class="grades-page page-width">
-    <header class="page-heading"><div><span class="section-kicker">YOUR PROGRESS</span><h1>Grades &amp; projects</h1><p>Complete the lessons, 24 applied projects, and mastery assessment to earn your ProductCraft certificate.</p></div><div class="grade-summary"><strong>${progress}%</strong><span>certificate progress</span></div></header>
+    <header class="page-heading"><div><span class="section-kicker">YOUR PROGRESS</span><h1>Grades, evaluations &amp; projects</h1><p>Complete 96 lesson evaluations, the applied portfolio, and the mastery assessment to earn your ProductCraft certificate.</p></div><div class="grade-summary"><strong>${progress}%</strong><span>certificate progress</span></div></header>
     <div class="grade-grid"><main>
-      <section class="grade-card certificate-progress"><div><span class="certificate-mini-mark">PC</span><div><small>PROFESSIONAL CERTIFICATE</small><h2>${ready ? "Certificate earned" : "Keep building your product craft"}</h2><p>Certificate progress combines lessons (70%), applied module projects (20%), and mastery assessment performance (10%).</p></div></div><div class="certificate-bar"><i style="width:${progress}%"></i></div><div class="requirement-grid"><span class="${state.completed.size === totalLessons ? "done" : ""}"><b>${state.completed.size}/${totalLessons}</b> lessons</span><span class="${completedModuleProjects() === modules.length ? "done" : ""}"><b>${completedModuleProjects()}/${modules.length}</b> projects</span><span class="${correctQuizAnswers() >= 20 ? "done" : ""}"><b>${correctQuizAnswers()}/20</b> quiz target</span></div><button class="primary-button" data-action="open-certificate" ${ready ? "" : "disabled"}>${ready ? "View certificate" : `${100 - progress}% remaining`}</button></section>
+      <section class="grade-card certificate-progress"><div><span class="certificate-mini-mark">PC</span><div><small>PROFESSIONAL CERTIFICATE</small><h2>${ready ? "Certificate earned" : "Keep building your product craft"}</h2><p>Certificate progress combines completed lessons (50%), lesson-level evaluations (20%), applied module projects (20%), and the program mastery quiz (10%).</p></div></div><div class="certificate-bar"><i style="width:${progress}%"></i></div><div class="requirement-grid"><span class="${state.completed.size === totalLessons ? "done" : ""}"><b>${state.completed.size}/${totalLessons}</b> lessons</span><span class="${completedLessonEvaluations() === totalLessons ? "done" : ""}"><b>${completedLessonEvaluations()}/${totalLessons}</b> evaluations</span><span class="${completedModuleProjects() === modules.length ? "done" : ""}"><b>${completedModuleProjects()}/${modules.length}</b> projects</span><span class="${correctQuizAnswers() >= 20 ? "done" : ""}"><b>${correctQuizAnswers()}/20</b> quiz target</span></div><button class="primary-button" data-action="open-certificate" ${ready ? "" : "disabled"}>${ready ? "View certificate" : `${100 - progress}% remaining`}</button></section>
       <section class="grade-card"><div class="grade-card-heading"><div><small>COURSEWORK</small><h2>Course progress</h2></div><span>6 courses</span></div><div class="course-grade-list">${courses.map((course) => { const coursePct = courseProgress(course.id); return `<article><span class="course-number" style="--course-color:${course.color}">${course.number}</span><div><b>${course.title}</b><small>${courseModules(course.id).reduce((sum, module) => sum + moduleProgress(module), 0)} of 16 lessons · ${course.hours} hours</small><div><i style="width:${coursePct}%"></i></div></div><strong>${coursePct}%</strong><a href="#learn/${courseModules(course.id)[0].id}/l01" aria-label="Open ${course.title}"><i class="ph ph-arrow-right" aria-hidden="true"></i></a></article>`; }).join("")}</div></section>
       <section class="grade-card"><div class="grade-card-heading"><div><small>APPLIED WORK</small><h2>Project portfolio</h2></div><span>${completedModuleProjects()} of 24 complete</span></div><div class="project-table"><div class="project-row header"><span>Project</span><span>Course</span><span>Status</span></div>${modules.map((module) => { const artifactCount = moduleArtifactProgress(module); const done = artifactCount === 4; const course = courses.find((item) => item.id === module.course); return `<a class="project-row" href="#learn/${module.id}/${module.lessons[Math.min(artifactCount, 3)].id}"><span><b>${module.project}</b><small>${module.framework}</small></span><span>Course ${course.number}</span><span class="status-pill ${done ? "done" : ""}">${done ? "Complete" : `${artifactCount}/4 artifacts`}</span></a>`; }).join("")}</div></section>
     </main><aside><div class="aside-card"><small>MASTERY QUIZ</small><b class="aside-big">${correctQuizAnswers()} correct</b><p>${Object.keys(state.quizAnswers).length} of ${quizQuestions.length} attempted · target 20 correct.</p><a href="#practice">Continue quiz →</a></div><div class="aside-card"><small>BOOKMARKS</small><b class="aside-big">${state.bookmarks.size} saved</b><p>Return to important lessons and concepts.</p><button class="text-button" data-action="show-bookmarks">View saved lessons</button></div><div class="aside-card"><small>NOTES</small><b class="aside-big">${Object.values(state.notes).filter(Boolean).length} lessons</b><p>Your private course notebook is stored on this device.</p><button class="text-button" data-action="show-notes">Open notebook</button></div></aside></div>
@@ -1083,18 +1061,8 @@ function handleClick(event) {
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const action = target.dataset.action;
-  if (action === "enroll") {
-    state.enrolled = true; saveState(); location.hash = `learn/${state.currentModule}/${state.currentLesson}`;
-  } else if (action === "save-program") {
-    state.savedProgram = !state.savedProgram;
-    saveState();
-    showToast(state.savedProgram ? "Program saved on this device." : "Program removed from saved learning.");
-    renderOverview();
-  } else if (action === "open-profile") {
+  if (action === "open-profile") {
     openProfile();
-  } else if (action === "toggle-overview-course") {
-    const content = document.querySelector(`[data-overview-course="${target.dataset.course}"]`);
-    const willOpen = content.hasAttribute("hidden"); content.toggleAttribute("hidden"); target.setAttribute("aria-expanded", willOpen);
   } else if (action === "toggle-course") {
     const id = target.dataset.course;
     if (state.openCourses.has(id)) state.openCourses.delete(id);
@@ -1121,6 +1089,30 @@ function handleClick(event) {
     saveState();
     showToast(state.draftedProjects.has(key) ? "Artifact added to your project portfolio." : "Artifact returned to draft status.");
     renderLearn();
+  } else if (action === "evaluation-answer") {
+    const key = lessonKey(state.currentModule, state.currentLesson);
+    if (!state.lessonEvaluations[key]) state.lessonEvaluations[key] = {};
+    state.lessonEvaluations[key][Number(target.dataset.question)] = Number(target.dataset.answer);
+    logPractice();
+    document.querySelector("#evaluation").outerHTML = lessonEvaluationHTML(currentModule(), currentLesson());
+  } else if (action === "reset-evaluation-question") {
+    const key = lessonKey(state.currentModule, state.currentLesson);
+    if (state.lessonEvaluations[key]) delete state.lessonEvaluations[key][Number(target.dataset.question)];
+    saveState();
+    document.querySelector("#evaluation").outerHTML = lessonEvaluationHTML(currentModule(), currentLesson());
+  } else if (action === "evaluation-rubric") {
+    const key = lessonKey(state.currentModule, state.currentLesson);
+    if (!state.evaluationRubrics[key]) state.evaluationRubrics[key] = [];
+    state.evaluationRubrics[key][Number(target.dataset.index)] = target.checked;
+    saveState();
+    document.querySelector("#evaluation").outerHTML = lessonEvaluationHTML(currentModule(), currentLesson());
+  } else if (action === "reset-lesson-evaluation") {
+    const key = lessonKey(state.currentModule, state.currentLesson);
+    delete state.lessonEvaluations[key];
+    delete state.evaluationResponses[key];
+    delete state.evaluationRubrics[key];
+    saveState();
+    document.querySelector("#evaluation").outerHTML = lessonEvaluationHTML(currentModule(), currentLesson());
   } else if (action === "inline-answer") {
     const container = target.closest(".inline-check");
     state.checks[state.currentModule] = Number(target.dataset.answer);
@@ -1132,7 +1124,10 @@ function handleClick(event) {
     saveState();
     container.outerHTML = knowledgeCheckHTML(currentModule());
   } else if (action === "toggle-complete") {
-    const key = lessonKey(state.currentModule, state.currentLesson); if (state.completed.has(key)) { state.completed.delete(key); saveState(); renderLearn(); } else { state.completed.add(key); saveState(); const next = adjacentLesson(currentModule(), currentLesson(), 1); showToast("Lesson completed — nice work."); if (next) location.hash = `learn/${next.module.id}/${next.lesson.id}`; else renderGrades(); }
+    const key = lessonKey(state.currentModule, state.currentLesson);
+    if (state.completed.has(key)) { state.completed.delete(key); saveState(); renderLearn(); }
+    else if (!evaluationReady(currentModule(), currentLesson())) { showToast("Complete the lesson evaluation before marking this lesson complete."); location.hash = `learn/${state.currentModule}/${state.currentLesson}/evaluation`; }
+    else { state.completed.add(key); saveState(); const next = adjacentLesson(currentModule(), currentLesson(), 1); showToast("Lesson completed — mastery evidence saved."); if (next) location.hash = `learn/${next.module.id}/${next.lesson.id}`; else renderGrades(); }
   } else if (action === "show-notes") {
     showNotes();
   } else if (action === "practice-tab") {
@@ -1213,6 +1208,15 @@ window.addEventListener("hashchange", render);
 
 document.addEventListener("input", (event) => {
   if (event.target.id === "lessonNote") { state.notes[lessonKey(state.currentModule, state.currentLesson)] = event.target.value; saveState(); }
+  if (event.target.id === "lessonEvaluationResponse") {
+    const key = lessonKey(state.currentModule, state.currentLesson);
+    state.evaluationResponses[key] = event.target.value;
+    saveState();
+    const counter = event.target.nextElementSibling;
+    if (counter) counter.textContent = `${event.target.value.trim().length}/120 minimum characters · saved automatically`;
+    const module = currentModule(); const lesson = currentLesson(); const score = lessonEvaluationScore(module, lesson); const rubricCount = (state.evaluationRubrics[key] || []).filter(Boolean).length; const ready = evaluationReady(module, lesson); const result = document.querySelector(".evaluation-result");
+    if (result) { result.classList.toggle("ready", ready); result.querySelector("i").className = `ph ${ready ? "ph-seal-check" : "ph-gauge"}`; result.querySelector("b").textContent = ready ? "Lesson evaluation complete" : "Complete the mastery evidence"; result.querySelector("p").textContent = ready ? "You met the knowledge threshold and recorded an applied, self-reviewed decision response." : `${score}/3 correct · ${event.target.value.trim().length}/120 response characters · ${rubricCount}/3 rubric checks.`; }
+  }
   if (event.target.id === "caseRecommendation") { state.caseRecommendation = event.target.value; saveState(); }
   if (event.target.id === "interviewNotes") { state.interviewNotes[state.interviewIndex] = event.target.value; saveState(); }
   if (event.target.matches("[data-case-score]")) {

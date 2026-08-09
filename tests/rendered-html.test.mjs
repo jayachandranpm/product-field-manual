@@ -53,6 +53,7 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(html, /id="certificateDialog"/);
   assert.match(html, /id="profileDialog"/);
   assert.match(html, /icons\/phosphor\.css/);
+  assert.doesNotMatch(html, /href="#overview"/);
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
   assert.match(html, /og-v2\.png/);
@@ -69,7 +70,13 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(js, /startTimer/);
   assert.match(js, /templateText/);
   assert.match(js, /lessonBriefHTML/);
+  assert.match(js, /evidenceStackHTML/);
   assert.match(js, /practiceShiftHTML/);
+  assert.match(js, /lessonEvaluationHTML/);
+  assert.match(js, /evaluationReady/);
+  assert.match(js, /pc-lesson-evaluations/);
+  assert.match(js, /if \(!hash \|\| hash === "overview"\) return \{ view: "learn"/);
+  assert.doesNotMatch(js, /else renderOverview\(\)/);
   assert.match(js, /draftedProjects/);
   assert.match(js, /certificateProgress/);
   assert.doesNotMatch(js, /guidedBriefingHTML|videoLessonHTML|play-video|briefing-play/);
@@ -77,6 +84,8 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.lesson-brief/);
   assert.match(css, /\.decision-shift-grid/);
+  assert.match(css, /\.lesson-evaluation/);
+  assert.match(css, /\.evidence-table/);
   assert.doesNotMatch(css, /\.guided-briefing|\.video-lesson|\.video-screen/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient/);
   assert.match(iconCss, /font-family: "Phosphor"/);
