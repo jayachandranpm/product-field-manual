@@ -37,10 +37,12 @@ test("server-renders the finished course shell and metadata", async () => {
 });
 
 test("ships a self-contained GitHub Pages course", async () => {
-  const [html, css, js, socialImage] = await Promise.all([
+  const [html, css, js, iconCss, iconFont, socialImage] = await Promise.all([
     readFile(new URL("../docs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../docs/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../docs/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../docs/icons/phosphor.css", import.meta.url), "utf8"),
+    stat(new URL("../docs/icons/Phosphor.woff2", import.meta.url)),
     stat(new URL("../docs/og-v2.png", import.meta.url)),
   ]);
 
@@ -49,6 +51,8 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(html, /id="globalSearch"/);
   assert.match(html, /id="notesDialog"/);
   assert.match(html, /id="certificateDialog"/);
+  assert.match(html, /id="profileDialog"/);
+  assert.match(html, /icons\/phosphor\.css/);
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
   assert.match(html, /og-v2\.png/);
@@ -64,9 +68,19 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(js, /interviewPrompts/);
   assert.match(js, /startTimer/);
   assert.match(js, /templateText/);
+  assert.match(js, /lessonBriefHTML/);
+  assert.match(js, /practiceShiftHTML/);
+  assert.match(js, /draftedProjects/);
+  assert.match(js, /certificateProgress/);
+  assert.doesNotMatch(js, /guidedBriefingHTML|videoLessonHTML|play-video|briefing-play/);
 
   assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /\.lesson-brief/);
+  assert.match(css, /\.decision-shift-grid/);
+  assert.doesNotMatch(css, /\.guided-briefing|\.video-lesson|\.video-screen/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient/);
+  assert.match(iconCss, /font-family: "Phosphor"/);
+  assert.ok(iconFont.size > 100_000);
   assert.ok(socialImage.size > 100_000);
   await access(new URL("../docs/.nojekyll", import.meta.url));
 });

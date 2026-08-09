@@ -17,8 +17,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&amp;display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=productcraft-20260809-2" />
-    <script src="app.js?v=productcraft-20260809-2" defer></script>
+    <link rel="stylesheet" href="icons/phosphor.css?v=2.1.1" />
+    <link rel="stylesheet" href="styles.css?v=productcraft-20260809-3" />
+    <script src="app.js?v=productcraft-20260809-3" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -30,22 +31,22 @@
           <span>Product<span>Craft</span></span>
         </a>
         <button class="explore-button" id="exploreButton" type="button" aria-expanded="false">
-          Explore <span aria-hidden="true">⌄</span>
+          Explore <i class="ph ph-caret-down" aria-hidden="true"></i>
         </button>
         <form class="global-search" id="globalSearch" role="search">
           <label class="sr-only" for="searchInput">Search lessons and skills</label>
           <input id="searchInput" type="search" placeholder="What do you want to learn?" autocomplete="off" />
-          <button type="submit" aria-label="Search"><span aria-hidden="true">⌕</span></button>
+          <button type="submit" aria-label="Search"><i class="ph ph-magnifying-glass" aria-hidden="true"></i></button>
           <div class="search-results" id="searchResults" hidden></div>
         </form>
         <nav class="header-nav" aria-label="Primary navigation">
           <a href="#overview" data-route-link="overview">Program</a>
           <a href="#learn" data-route-link="learn">My learning</a>
           <a href="#practice" data-route-link="practice">Practice</a>
-          <button class="icon-button" id="themeButton" type="button" aria-label="Use dark theme">◐</button>
+          <button class="icon-button" id="themeButton" type="button" aria-label="Use dark theme"><i class="ph ph-moon-stars" aria-hidden="true"></i></button>
           <button class="profile-button" id="profileButton" type="button" aria-label="Open learner profile">JC</button>
         </nav>
-        <button class="mobile-menu-button" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+        <button class="mobile-menu-button" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-expanded="false"><i class="ph ph-list" aria-hidden="true"></i></button>
       </div>
       <div class="explore-menu" id="exploreMenu" hidden>
         <div>
@@ -64,7 +65,7 @@
           <small>FEATURED PATH</small>
           <b>AI Product Manager</b>
           <span>Build, evaluate, and govern AI products.</span>
-          <a href="#learn/m22/l01">Start module →</a>
+          <a href="#learn/m22/l01">Start module <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
         </div>
       </div>
       <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation" hidden>
@@ -80,10 +81,10 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Mobile app navigation">
-      <a href="#overview" data-route-link="overview"><span aria-hidden="true">⌂</span>Program</a>
-      <a href="#learn" data-route-link="learn"><span aria-hidden="true">▷</span>Learn</a>
-      <a href="#practice" data-route-link="practice"><span aria-hidden="true">◇</span>Practice</a>
-      <a href="#grades" data-route-link="grades"><span aria-hidden="true">✓</span>Grades</a>
+      <a href="#overview" data-route-link="overview"><i class="ph ph-house" aria-hidden="true"></i>Program</a>
+      <a href="#learn" data-route-link="learn"><i class="ph ph-book-open-text" aria-hidden="true"></i>Learn</a>
+      <a href="#practice" data-route-link="practice"><i class="ph ph-brain" aria-hidden="true"></i>Practice</a>
+      <a href="#grades" data-route-link="grades"><i class="ph ph-chart-line-up" aria-hidden="true"></i>Grades</a>
     </nav>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -91,24 +92,40 @@
     <dialog class="notes-dialog" id="notesDialog">
       <form method="dialog" class="dialog-header">
         <div><small>YOUR NOTEBOOK</small><h2>Course notes</h2></div>
-        <button type="submit" aria-label="Close notes">×</button>
+        <button type="submit" aria-label="Close notes"><i class="ph ph-x" aria-hidden="true"></i></button>
       </form>
       <div id="allNotes"></div>
     </dialog>
 
+    <dialog class="profile-dialog" id="profileDialog">
+      <form id="profileForm">
+        <div class="dialog-header">
+          <div><small>LEARNER PROFILE</small><h2>Personalize your plan</h2></div>
+          <button id="closeProfile" type="button" aria-label="Close profile"><i class="ph ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="profile-form-body">
+          <label><span>Your name</span><input id="profileName" name="name" autocomplete="name" required maxlength="60" /></label>
+          <label><span>Current level</span><select id="profileLevel" name="level"><option value="Breaking into product">Breaking into product</option><option value="Working product manager">Working product manager</option><option value="Product leader">Product leader</option></select></label>
+          <label><span>Weekly learning goal</span><select id="profileGoal" name="goal"><option value="3">3 hours / week</option><option value="5">5 hours / week</option><option value="10">10 hours / week</option><option value="15">15 hours / week</option></select></label>
+          <p>Your profile and learning progress stay on this device.</p>
+          <button class="primary-button full" type="submit">Save learning plan</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog class="certificate-dialog" id="certificateDialog">
-      <button class="dialog-close" id="closeCertificate" type="button" aria-label="Close certificate">×</button>
+      <button class="dialog-close" id="closeCertificate" type="button" aria-label="Close certificate"><i class="ph ph-x" aria-hidden="true"></i></button>
       <div class="certificate-sheet">
         <span class="certificate-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         <p>PRODUCTCRAFT</p>
         <small>CERTIFICATE OF COMPLETION</small>
         <h2>Product Management<br />Professional Certificate</h2>
         <p class="certificate-copy">This certifies that</p>
-        <h3>Jaya Chandran</h3>
-        <p class="certificate-copy">completed 96 lessons, six applied projects, and the ProductCraft portfolio capstone.</p>
+        <h3 id="certificateName">Jaya Chandran</h3>
+        <p class="certificate-copy">completed 96 lessons, 24 applied projects, the mastery assessment, and the ProductCraft portfolio capstone.</p>
         <div class="certificate-signatures"><span><b>ProductCraft Faculty</b><small>Program Director</small></span><span><b id="certificateDate">August 2026</b><small>Date awarded</small></span></div>
       </div>
-      <button class="primary-button" id="printCertificate" type="button">Print certificate</button>
+      <button class="primary-button" id="printCertificate" type="button"><i class="ph ph-printer" aria-hidden="true"></i> Print certificate</button>
     </dialog>
 
     <noscript>
