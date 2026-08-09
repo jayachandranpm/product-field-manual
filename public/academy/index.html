@@ -18,8 +18,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="icons/phosphor.css?v=2.1.1" />
-    <link rel="stylesheet" href="styles.css?v=productcraft-20260809-4" />
-    <script src="app.js?v=productcraft-20260809-4" defer></script>
+    <link rel="stylesheet" href="styles.css?v=productcraft-20260809-5" />
+    <script src="app.js?v=productcraft-20260809-5" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -30,9 +30,6 @@
           <span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           <span>Product<span>Craft</span></span>
         </a>
-        <button class="explore-button" id="exploreButton" type="button" aria-expanded="false">
-          Curriculum <i class="ph ph-caret-down" aria-hidden="true"></i>
-        </button>
         <form class="global-search" id="globalSearch" role="search">
           <label class="sr-only" for="searchInput">Search lessons and skills</label>
           <input id="searchInput" type="search" placeholder="What do you want to learn?" autocomplete="off" />
@@ -46,33 +43,7 @@
           <button class="icon-button" id="themeButton" type="button" aria-label="Use dark theme"><i class="ph ph-moon-stars" aria-hidden="true"></i></button>
           <button class="profile-button" id="profileButton" type="button" aria-label="Open learner profile">JC</button>
         </nav>
-        <button class="mobile-menu-button" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-expanded="false"><i class="ph ph-list" aria-hidden="true"></i></button>
       </div>
-      <div class="explore-menu" id="exploreMenu" hidden>
-        <div>
-          <strong>Browse by skill</strong>
-          <a href="#learn/m05/l01">Customer discovery</a>
-          <a href="#learn/m09/l01">Product strategy</a>
-          <a href="#learn/m13/l01">Metrics &amp; analytics</a>
-        </div>
-        <div>
-          <strong>Browse by career stage</strong>
-          <a href="#learn/m01/l01" data-level-shortcut="foundation">Breaking into product</a>
-          <a href="#learn/m09/l01" data-level-shortcut="practitioner">Working product manager</a>
-          <a href="#learn/m21/l01" data-level-shortcut="leader">Product leader</a>
-        </div>
-        <div class="explore-feature">
-          <small>FEATURED PATH</small>
-          <b>AI Product Manager</b>
-          <span>Build, evaluate, and govern AI products.</span>
-          <a href="#learn/m22/l01">Start module <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
-        </div>
-      </div>
-      <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation" hidden>
-        <a href="#learn">Learn</a>
-        <a href="#practice">Evaluate</a>
-        <a href="#grades">Progress</a>
-      </nav>
     </header>
 
     <main id="mainContent" tabindex="-1">
@@ -92,6 +63,10 @@
         <div><small>YOUR NOTEBOOK</small><h2>Course notes</h2></div>
         <button type="submit" aria-label="Close notes"><i class="ph ph-x" aria-hidden="true"></i></button>
       </form>
+      <div class="current-note-editor" id="currentNoteEditor">
+        <label for="dialogLessonNote"><span>Notes for this lesson</span><textarea id="dialogLessonNote" placeholder="Capture an idea, question, example, or connection…"></textarea></label>
+        <small>Saved automatically on this device</small>
+      </div>
       <div id="allNotes"></div>
     </dialog>
 

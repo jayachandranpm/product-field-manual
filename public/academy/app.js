@@ -570,7 +570,6 @@ const state = {
   practiceTab: "quiz",
   quizIndex: 0,
   quizAnswers: readJSON("pc-quiz-answers", {}),
-  checks: readJSON("pc-checks", {}),
   draftedProjects: new Set(readJSON("pc-drafted-projects", [])),
   lessonEvaluations: readJSON("pc-lesson-evaluations", {}),
   evaluationResponses: readJSON("pc-evaluation-responses", {}),
@@ -599,7 +598,6 @@ function saveState() {
   localStorage.setItem("pc-current-module", state.currentModule);
   localStorage.setItem("pc-current-lesson", state.currentLesson);
   localStorage.setItem("pc-quiz-answers", JSON.stringify(state.quizAnswers));
-  localStorage.setItem("pc-checks", JSON.stringify(state.checks));
   localStorage.setItem("pc-drafted-projects", JSON.stringify([...state.draftedProjects]));
   localStorage.setItem("pc-lesson-evaluations", JSON.stringify(state.lessonEvaluations));
   localStorage.setItem("pc-evaluation-responses", JSON.stringify(state.evaluationResponses));
@@ -671,6 +669,8 @@ function updateNav(view) {
 
 function render() {
   const route = getRoute();
+  document.body.dataset.view = route.view;
+  document.body.classList.remove("syllabus-open");
   if (route.module && modules.some((module) => module.id === route.module)) {
     state.currentModule = route.module;
     const module = currentModule();
@@ -746,29 +746,19 @@ function decisionQuestion(module, lesson, index) {
   ][index];
 }
 
-function knowledgeCheckHTML(module) {
-  const answered = state.checks[module.id];
-  const isCorrect = answered === module.check.a;
-  return `<div class="inline-check" data-check-module="${module.id}">
-    <p>${module.check.q}</p>
-    <div>${module.check.options.map((option, index) => `<button data-action="inline-answer" data-answer="${index}" data-correct="${module.check.a}" class="${answered !== undefined ? (index === module.check.a ? "correct" : index === answered ? "incorrect" : "muted") : ""}" ${answered !== undefined ? "disabled" : ""}><span>${String.fromCharCode(65 + index)}</span>${option}</button>`).join("")}</div>
-    ${answered !== undefined ? `<aside class="check-feedback ${isCorrect ? "correct" : "incorrect"}"><b>${isCorrect ? "Correct." : "Review the reasoning."}</b><p>${isCorrect ? "You selected the answer that best preserves product judgment and customer value." : `The strongest answer is ${String.fromCharCode(65 + module.check.a)}. Revisit the core concept and worked case, then try again.`}</p>${isCorrect ? "" : `<button class="text-button" data-action="reset-inline-check">Try again</button>`}</aside>` : ""}
-  </div>`;
-}
-
-function renderLearn() {
+function renderLearn(reopenSyllabus = false) {
   const module = currentModule();
   const lesson = currentLesson();
   const course = courses.find((item) => item.id === module.course);
   const key = lessonKey(module.id, lesson.id);
   const lessonIndex = module.lessons.findIndex((item) => item.id === lesson.id);
-  const note = state.notes[key] || "";
   const sources = module.sources.map((id) => sourceLibrary[id]).filter(Boolean);
   appRoot.innerHTML = `
     <div class="learning-layout">
+      <button class="sidebar-scrim" data-action="close-syllabus" aria-label="Close course contents" tabindex="-1"></button>
       <aside class="learning-sidebar" aria-label="Course syllabus">
         <div class="learning-sidebar-top">
-          <a href="#learn"><i class="ph ph-book-open-text" aria-hidden="true"></i> Course contents</a>
+          <div class="syllabus-heading"><span><i class="ph ph-book-open-text" aria-hidden="true"></i><b>Course contents</b></span><button data-action="close-syllabus" aria-label="Close course contents"><i class="ph ph-x" aria-hidden="true"></i></button></div>
           <div class="overall-progress"><span><b>${totalProgress()}%</b> certificate progress</span><div><i style="width:${totalProgress()}%"></i></div><small>${state.completed.size} of ${totalLessons} lessons complete</small></div>
         </div>
         <div class="syllabus-scroll">${syllabusHTML()}</div>
@@ -776,7 +766,7 @@ function renderLearn() {
 
       <section class="lesson-workspace">
         <header class="lesson-topbar">
-          <button class="syllabus-toggle" data-action="toggle-syllabus" aria-label="Toggle syllabus"><i class="ph ph-list" aria-hidden="true"></i></button>
+          <button class="syllabus-toggle" data-action="toggle-syllabus" aria-label="Open course contents"><i class="ph ph-list" aria-hidden="true"></i></button>
           <div><small>COURSE ${course.number} · MODULE ${module.number}</small><b>${module.title}</b></div>
           <div class="lesson-actions"><button data-action="show-notes"><i class="ph ph-note-pencil" aria-hidden="true"></i> Notes</button><button data-action="toggle-bookmark" class="${state.bookmarks.has(key) ? "saved" : ""}" aria-label="Bookmark lesson"><i class="ph ph-bookmark-simple" aria-hidden="true"></i> ${state.bookmarks.has(key) ? "Saved" : "Save"}</button></div>
         </header>
@@ -841,16 +831,14 @@ function renderLearn() {
             </footer>
           </article>
 
-          <aside class="lesson-rail">
-            <div class="rail-progress"><div class="circle-progress" style="--progress:${moduleProgress(module) * 25}"><span>${moduleProgress(module)}/4</span></div><div><b>Module progress</b><small>${module.duration}</small></div></div>
-            <div class="rail-card"><div><b>Your notes</b><button data-action="show-notes">View all</button></div><textarea id="lessonNote" placeholder="Capture an idea, question, or example…">${escapeHTML(note)}</textarea><small>Saved automatically on this device</small></div>
-            <div class="rail-card"><b>Module project · ${moduleArtifactProgress(module)}/4 artifacts</b><h3>${module.project}</h3><p>Complete the four lesson artifacts, then combine them into this module deliverable.</p><a href="#grades">View project status <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
-            <div class="rail-card evaluation-rail"><b>Lesson evaluation</b><h3>${lessonEvaluationScore(module, lesson)}/3 correct</h3><p>${evaluationReady(module, lesson) ? "Mastery evidence recorded for this lesson." : "Answer three questions, write an applied response, and complete the self-review."}</p><a href="#learn/${module.id}/${lesson.id}/evaluation">${evaluationReady(module, lesson) ? "Review evaluation" : "Continue evaluation"} <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div>
-            <div class="rail-card next-up"><small>NEXT UP</small>${nextLessonLink(module, lesson, true) || `<b>Course review</b><a href="#grades">See your grades <i class="ph ph-arrow-right" aria-hidden="true"></i></a>`}</div>
-          </aside>
         </div>
       </section>
     </div>`;
+  if (reopenSyllabus && window.matchMedia("(max-width: 900px)").matches) {
+    document.querySelector(".learning-sidebar")?.classList.add("mobile-open");
+    document.querySelector(".learning-layout")?.classList.add("syllabus-open");
+    document.body.classList.add("syllabus-open");
+  }
 }
 
 function conceptExplanation(module, lesson, index) {
@@ -1065,16 +1053,21 @@ function handleClick(event) {
     openProfile();
   } else if (action === "toggle-course") {
     const id = target.dataset.course;
+    const reopenSyllabus = document.querySelector(".learning-sidebar")?.classList.contains("mobile-open");
     if (state.openCourses.has(id)) state.openCourses.delete(id);
     else state.openCourses.add(id);
-    renderLearn();
+    renderLearn(reopenSyllabus);
   } else if (action === "toggle-module") {
     const id = target.dataset.module;
+    const reopenSyllabus = document.querySelector(".learning-sidebar")?.classList.contains("mobile-open");
     if (state.openModules.has(id)) state.openModules.delete(id);
     else state.openModules.add(id);
-    renderLearn();
+    renderLearn(reopenSyllabus);
   } else if (action === "toggle-syllabus") {
-    document.querySelector(".learning-sidebar")?.classList.toggle("mobile-open");
+    const layout = document.querySelector(".learning-layout"); const sidebar = document.querySelector(".learning-sidebar"); const opening = !sidebar?.classList.contains("mobile-open");
+    sidebar?.classList.toggle("mobile-open", opening); layout?.classList.toggle("syllabus-open", opening); document.body.classList.toggle("syllabus-open", opening);
+  } else if (action === "close-syllabus") {
+    document.querySelector(".learning-sidebar")?.classList.remove("mobile-open"); document.querySelector(".learning-layout")?.classList.remove("syllabus-open"); document.body.classList.remove("syllabus-open");
   } else if (action === "toggle-bookmark") {
     const key = lessonKey(state.currentModule, state.currentLesson);
     if (state.bookmarks.has(key)) state.bookmarks.delete(key);
@@ -1113,16 +1106,6 @@ function handleClick(event) {
     delete state.evaluationRubrics[key];
     saveState();
     document.querySelector("#evaluation").outerHTML = lessonEvaluationHTML(currentModule(), currentLesson());
-  } else if (action === "inline-answer") {
-    const container = target.closest(".inline-check");
-    state.checks[state.currentModule] = Number(target.dataset.answer);
-    logPractice();
-    container.outerHTML = knowledgeCheckHTML(currentModule());
-  } else if (action === "reset-inline-check") {
-    const container = target.closest(".inline-check");
-    delete state.checks[state.currentModule];
-    saveState();
-    container.outerHTML = knowledgeCheckHTML(currentModule());
   } else if (action === "toggle-complete") {
     const key = lessonKey(state.currentModule, state.currentLesson);
     if (state.completed.has(key)) { state.completed.delete(key); saveState(); renderLearn(); }
@@ -1184,8 +1167,11 @@ function downloadText(filename, content) {
 
 function showNotes(bookmarksOnly = false) {
   const dialog = document.querySelector("#notesDialog"); const container = document.querySelector("#allNotes");
+  const editor = document.querySelector("#currentNoteEditor"); const noteInput = document.querySelector("#dialogLessonNote");
   const records = modules.flatMap((module) => module.lessons.map((lesson) => ({ module, lesson, key: lessonKey(module.id, lesson.id) }))).filter((entry) => bookmarksOnly ? state.bookmarks.has(entry.key) : Boolean(state.notes[entry.key]));
   dialog.querySelector("h2").textContent = bookmarksOnly ? "Saved lessons" : "Course notes";
+  editor.hidden = bookmarksOnly;
+  if (!bookmarksOnly) noteInput.value = state.notes[lessonKey(state.currentModule, state.currentLesson)] || "";
   container.innerHTML = records.length ? records.map((entry) => `<a href="#learn/${entry.module.id}/${entry.lesson.id}" onclick="document.querySelector('#notesDialog').close()"><small>MODULE ${entry.module.number}</small><b>${entry.lesson.title}</b><p>${bookmarksOnly ? entry.lesson.summary : escapeHTML(state.notes[entry.key])}</p></a>`).join("") : `<div class="empty-notes"><i class="ph ph-note-pencil" aria-hidden="true"></i><b>${bookmarksOnly ? "No saved lessons yet" : "Your notebook is empty"}</b><p>${bookmarksOnly ? "Use Save on any lesson to return to it here." : "Write notes beside any lesson and they will appear here."}</p></div>`;
   dialog.showModal();
 }
@@ -1207,7 +1193,7 @@ document.addEventListener("click", handleClick);
 window.addEventListener("hashchange", render);
 
 document.addEventListener("input", (event) => {
-  if (event.target.id === "lessonNote") { state.notes[lessonKey(state.currentModule, state.currentLesson)] = event.target.value; saveState(); }
+  if (event.target.id === "dialogLessonNote") { state.notes[lessonKey(state.currentModule, state.currentLesson)] = event.target.value; saveState(); }
   if (event.target.id === "lessonEvaluationResponse") {
     const key = lessonKey(state.currentModule, state.currentLesson);
     state.evaluationResponses[key] = event.target.value;
@@ -1237,8 +1223,6 @@ document.querySelector("#searchInput").addEventListener("input", (event) => {
   results.hidden = false;
 });
 
-document.querySelector("#exploreButton").addEventListener("click", (event) => { const menu = document.querySelector("#exploreMenu"); const open = menu.hasAttribute("hidden"); menu.toggleAttribute("hidden"); event.currentTarget.setAttribute("aria-expanded", open); });
-document.querySelector("#mobileMenuButton").addEventListener("click", (event) => { const menu = document.querySelector("#mobileNav"); const open = menu.hasAttribute("hidden"); menu.toggleAttribute("hidden"); event.currentTarget.setAttribute("aria-expanded", open); });
 document.querySelector("#themeButton").addEventListener("click", () => { document.documentElement.classList.toggle("dark"); localStorage.setItem("pc-theme", document.documentElement.classList.contains("dark") ? "dark" : "light"); });
 document.querySelector("#profileButton").addEventListener("click", openProfile);
 document.querySelector("#closeProfile").addEventListener("click", () => document.querySelector("#profileDialog").close());
@@ -1256,8 +1240,7 @@ document.querySelector("#profileForm").addEventListener("submit", (event) => {
 });
 document.querySelector("#closeCertificate").addEventListener("click", () => document.querySelector("#certificateDialog").close());
 document.querySelector("#printCertificate").addEventListener("click", () => window.print());
-document.addEventListener("keydown", (event) => { if (event.key === "/" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { event.preventDefault(); document.querySelector("#searchInput").focus(); } });
-document.querySelectorAll("[data-level-shortcut]").forEach((link) => link.addEventListener("click", () => { document.querySelector("#exploreMenu").hidden = true; }));
+document.addEventListener("keydown", (event) => { if (event.key === "/" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { event.preventDefault(); document.querySelector("#searchInput").focus(); } if (event.key === "Escape") { document.querySelector(".learning-sidebar")?.classList.remove("mobile-open"); document.querySelector(".learning-layout")?.classList.remove("syllabus-open"); document.body.classList.remove("syllabus-open"); } });
 if (localStorage.getItem("pc-theme") === "dark") document.documentElement.classList.add("dark");
 
 render();

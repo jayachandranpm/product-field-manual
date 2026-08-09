@@ -52,8 +52,10 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(html, /id="notesDialog"/);
   assert.match(html, /id="certificateDialog"/);
   assert.match(html, /id="profileDialog"/);
+  assert.match(html, /id="currentNoteEditor"/);
   assert.match(html, /icons\/phosphor\.css/);
   assert.doesNotMatch(html, /href="#overview"/);
+  assert.doesNotMatch(html, /id="exploreButton"|id="mobileMenuButton"|id="mobileNav"/);
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
   assert.match(html, /og-v2\.png/);
@@ -75,17 +77,26 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(js, /lessonEvaluationHTML/);
   assert.match(js, /evaluationReady/);
   assert.match(js, /pc-lesson-evaluations/);
+  assert.match(js, /sidebar-scrim/);
   assert.match(js, /if \(!hash \|\| hash === "overview"\) return \{ view: "learn"/);
   assert.doesNotMatch(js, /else renderOverview\(\)/);
+  assert.doesNotMatch(js, /lesson-rail|knowledgeCheckHTML|inline-answer/);
   assert.match(js, /draftedProjects/);
   assert.match(js, /certificateProgress/);
   assert.doesNotMatch(js, /guidedBriefingHTML|videoLessonHTML|play-video|briefing-play/);
+
+  const usedActions = [...js.matchAll(/data-action=["']([^"']+)/g)].map((match) => match[1]);
+  const handledActions = [...js.matchAll(/action\s*===\s*["']([^"']+)/g)].map((match) => match[1]);
+  assert.deepEqual([...new Set(usedActions.filter((action) => !handledActions.includes(action)))], []);
 
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.lesson-brief/);
   assert.match(css, /\.decision-shift-grid/);
   assert.match(css, /\.lesson-evaluation/);
   assert.match(css, /\.evidence-table/);
+  assert.match(css, /\.learning-layout \{ min-height:/);
+  assert.match(css, /\.sidebar-scrim/);
+  assert.match(css, /\.evidence-head \{ display: none; \}/);
   assert.doesNotMatch(css, /\.guided-briefing|\.video-lesson|\.video-screen/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient/);
   assert.match(iconCss, /font-family: "Phosphor"/);
