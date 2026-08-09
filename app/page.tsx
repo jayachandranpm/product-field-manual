@@ -4,7 +4,7 @@ export default function Home() {
       <iframe
         className="course-frame"
         src="/academy/"
-        title="The Product Field Manual interactive course"
+        title="ProductCraft Product Management Professional Certificate"
       />
     </main>
   );

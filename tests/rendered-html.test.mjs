@@ -29,8 +29,8 @@ test("server-renders the finished course shell and metadata", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>The Product Field Manual<\/title>/i);
-  assert.match(html, /The Product Field Manual interactive course/);
+  assert.match(html, /<title>Product Management Professional Certificate \| ProductCraft<\/title>/i);
+  assert.match(html, /ProductCraft Product Management Professional Certificate/);
   assert.match(html, /src="\/academy\/"/);
   assert.match(html, /summary_large_image/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|SkeletonPreview/);
@@ -41,28 +41,29 @@ test("ships a self-contained GitHub Pages course", async () => {
     readFile(new URL("../docs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../docs/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../docs/app.js", import.meta.url), "utf8"),
-    stat(new URL("../docs/og.png", import.meta.url)),
+    stat(new URL("../docs/og-v2.png", import.meta.url)),
   ]);
 
-  assert.match(html, /Learn to build[\s\S]*what matters/);
-  assert.match(html, /id="moduleGrid"/);
-  assert.match(html, /id="panel-flashcards"/);
-  assert.match(html, /id="panel-quiz"/);
-  assert.match(html, /id="panel-rice"/);
-  assert.match(html, /id="panel-metrics"/);
-  assert.match(html, /id="panel-interview"/);
-  assert.match(html, /id="capstone"/);
+  assert.match(html, /Product Management Professional Certificate/);
+  assert.match(html, /id="appRoot"/);
+  assert.match(html, /id="globalSearch"/);
+  assert.match(html, /id="notesDialog"/);
+  assert.match(html, /id="certificateDialog"/);
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
-  assert.match(html, /og\.png/);
+  assert.match(html, /og-v2\.png/);
 
   const moduleIds = [...js.matchAll(/id: "m\d{2}"/g)];
-  assert.equal(moduleIds.length, 12);
+  assert.equal(moduleIds.length, 24);
+  const lessonIds = [...js.matchAll(/L\("l\d{2}"/g)];
+  assert.equal(lessonIds.length, 96);
   assert.match(js, /localStorage/);
   assert.match(js, /quizQuestions/);
-  assert.match(js, /calculateRice/);
-  assert.match(js, /buildMetricTree/);
-  assert.match(js, /toggleTimer/);
+  assert.match(js, /flashcards/);
+  assert.match(js, /caseLabHTML/);
+  assert.match(js, /interviewPrompts/);
+  assert.match(js, /startTimer/);
+  assert.match(js, /templateText/);
 
   assert.match(css, /prefers-reduced-motion/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient/);

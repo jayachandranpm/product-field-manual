@@ -15,25 +15,25 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase,
-    title: "The Product Field Manual",
+    title: "Product Management Professional Certificate | ProductCraft",
     description:
-      "A rigorous, interactive product management course from first principles to product leadership and AI.",
+      "A complete, project-based product management certificate with 6 courses, 24 modules, 96 lessons, practice labs, and a portfolio capstone.",
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
     },
     openGraph: {
-      title: "The Product Field Manual",
+      title: "Product Management Professional Certificate | ProductCraft",
       description:
-        "Learn to build what matters. 12 modules, 48 lessons, and 5 live product practice labs.",
+        "96 lessons, 6 courses, 24 modules, and hands-on product work from foundations to product leadership and AI.",
       type: "website",
-      images: [{ url: "/og.png", width: 1200, height: 630 }],
+      images: [{ url: "/academy/og-v2.png", width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "The Product Field Manual",
-      description: "Learn to build what matters.",
-      images: ["/og.png"],
+      title: "Product Management Professional Certificate",
+      description: "Learn product management by doing the work.",
+      images: ["/academy/og-v2.png"],
     },
   };
 }
