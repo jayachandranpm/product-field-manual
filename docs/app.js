@@ -659,7 +659,7 @@ function showToast(message) {
 function getRoute() {
   const hash = location.hash.replace(/^#/, "");
   if (!hash || hash === "overview") return { view: "learn", module: state.currentModule, lesson: state.currentLesson };
-  if (["objectives", "source-reading", "core-concept", "playbook", "case", "practice-task", "evaluation"].includes(hash)) return { view: "learn", module: state.currentModule, lesson: state.currentLesson, section: hash };
+  if (["objectives", "source-reading", "core-concept", "deep-dive", "playbook", "case", "practice-task", "evaluation"].includes(hash)) return { view: "learn", module: state.currentModule, lesson: state.currentLesson, section: hash };
   const parts = hash.split("/");
   if (parts[0] === "learn") return { view: "learn", module: parts[1] || state.currentModule, lesson: parts[2] || state.currentLesson, section: parts[3] };
   return { view: parts[0], module: parts[1], lesson: parts[2], section: parts[3] };
@@ -677,8 +677,8 @@ function render() {
     state.currentModule = route.module;
     const module = currentModule();
     state.currentLesson = module.lessons.some((lesson) => lesson.id === route.lesson) ? route.lesson : module.lessons[0].id;
-    state.openCourses.add(module.course);
-    state.openModules.add(module.id);
+    state.openCourses = new Set([module.course]);
+    state.openModules = new Set([module.id]);
     saveState();
   }
   updateNav(route.view);
@@ -697,9 +697,9 @@ function render() {
 function syllabusHTML() {
   return courses.map((course) => {
     const courseOpen = state.openCourses.has(course.id);
-    return `<section class="side-course">
+    return `<section class="side-course ${course.id === currentModule().course ? "current-course" : ""}">
       <button class="side-course-header" data-action="toggle-course" data-course="${course.id}" aria-expanded="${courseOpen}">
-        <span class="tiny-course-number" style="--course-color:${course.color}">${course.number}</span><span><small>COURSE ${course.number}</small><b>${course.short}</b></span><i>${courseProgress(course.id)}%</i><em><i class="ph ph-caret-down" aria-hidden="true"></i></em>
+        <span class="tiny-course-number">${course.number}</span><span><small>COURSE ${course.number}</small><b>${course.short}</b></span><i>${courseProgress(course.id)}%</i><em><i class="ph ph-caret-down" aria-hidden="true"></i></em>
       </button>
       <div class="side-modules" ${courseOpen ? "" : "hidden"}>
         ${courseModules(course.id).map((module) => {
@@ -717,6 +717,30 @@ function syllabusHTML() {
       </div>
     </section>`;
   }).join("");
+}
+
+function filterSyllabus(query) {
+  const normalized = query.trim().toLowerCase();
+  document.querySelectorAll(".side-course").forEach((courseElement) => {
+    const courseButton = courseElement.querySelector(".side-course-header");
+    const courseId = courseButton?.dataset.course;
+    const modulesElement = courseElement.querySelector(".side-modules");
+    const courseMatches = Boolean(normalized && courseButton?.textContent.toLowerCase().includes(normalized));
+    let matchingModules = 0;
+
+    courseElement.querySelectorAll(".side-module").forEach((moduleElement) => {
+      const moduleButton = moduleElement.querySelector(":scope > button");
+      const moduleId = moduleButton?.dataset.module;
+      const moduleMatches = !normalized || courseMatches || moduleElement.textContent.toLowerCase().includes(normalized);
+      moduleElement.hidden = !moduleMatches;
+      if (moduleMatches) matchingModules += 1;
+      const lessonsElement = moduleElement.querySelector(".side-lessons");
+      if (lessonsElement) lessonsElement.hidden = normalized ? !moduleMatches : !state.openModules.has(moduleId);
+    });
+
+    courseElement.hidden = Boolean(normalized && !courseMatches && matchingModules === 0);
+    if (modulesElement) modulesElement.hidden = normalized ? false : !state.openCourses.has(courseId);
+  });
 }
 
 function lessonBriefHTML(module, lesson) {
@@ -757,6 +781,33 @@ function sourceReadingHTML(module, lesson) {
   </section>`;
 }
 
+function moduleLessonTrailHTML(module) {
+  return `<nav class="module-lesson-trail" aria-label="Lessons in ${module.title}">
+    ${module.lessons.map((lesson, index) => {
+      const key = lessonKey(module.id, lesson.id);
+      return `<a href="#learn/${module.id}/${lesson.id}" class="${lesson.id === state.currentLesson ? "current" : ""} ${state.completed.has(key) ? "done" : ""}" aria-current="${lesson.id === state.currentLesson ? "step" : "false"}"><span>${state.completed.has(key) ? `<i class="ph ph-check" aria-hidden="true"></i>` : index + 1}</span><b>${lesson.title}</b></a>`;
+    }).join("")}
+  </nav>`;
+}
+
+function deepDiveHTML(module, lesson) {
+  const dossier = sourceDossiers[module.id];
+  const lessonIndex = module.lessons.findIndex((item) => item.id === lesson.id);
+  const chapter = dossier.chapters[lessonIndex];
+  return `<section class="reading-section lesson-deep-dive" id="deep-dive">
+    <span class="reading-kicker">DEEP READING</span><h2>Make the reasoning operational</h2>
+    <p class="section-intro">The quick model gives you the vocabulary. This breakdown shows how each move changes the evidence, tradeoff, and follow-through behind <strong>${lesson.artifact}</strong>.</p>
+    <div class="deep-dive-list">
+      ${lesson.keyMoves.map((move, index) => `<article><header><span>${String(index + 1).padStart(2, "0")}</span><h3>${move}</h3></header><p>${conceptExplanation(module, lesson, index)}</p><aside><small>CASEBOOK CHECKPOINT</small><b>${chapter.notes[index]}</b></aside></article>`).join("")}
+    </div>
+    <div class="decision-boundaries">
+      <article><small>USE IT WHEN</small><p>${lesson.summary}</p></article>
+      <article><small>DO NOT USE IT TO</small><p>Hide uncertainty or justify a preferred answer. In this module, specifically watch for <strong>${module.pitfalls[lessonIndex % module.pitfalls.length].toLowerCase()}</strong>.</p></article>
+      <article><small>READY TO MOVE ON WHEN</small><p>${module.checklist[lessonIndex % module.checklist.length]}, and the team can explain which evidence would reopen the decision.</p></article>
+    </div>
+  </section>`;
+}
+
 function renderLearn(reopenSyllabus = false) {
   const module = currentModule();
   const lesson = currentLesson();
@@ -772,6 +823,7 @@ function renderLearn(reopenSyllabus = false) {
         <div class="learning-sidebar-top">
           <div class="syllabus-heading"><span><i class="ph ph-book-open-text" aria-hidden="true"></i><b>Course contents</b></span><button data-action="close-syllabus" aria-label="Close course contents"><i class="ph ph-x" aria-hidden="true"></i></button></div>
           <div class="overall-progress"><span><b>${totalProgress()}%</b> certificate progress</span><div><i style="width:${totalProgress()}%"></i></div><small>${state.completed.size} of ${totalLessons} lessons complete</small></div>
+          <label class="syllabus-filter" for="syllabusFilter"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input id="syllabusFilter" type="search" placeholder="Filter lessons" autocomplete="off" /><span class="sr-only">Filter course lessons</span></label>
         </div>
         <div class="syllabus-scroll">${syllabusHTML()}</div>
       </aside>
@@ -786,14 +838,16 @@ function renderLearn(reopenSyllabus = false) {
         <div class="lesson-content-wrap">
           <article class="lesson-article">
             <div class="lesson-heading">
-              <div class="lesson-badges"><span><i class="ph ph-book-open-text" aria-hidden="true"></i> Lesson ${lessonIndex + 1} of 4</span><span><i class="ph ph-clock" aria-hidden="true"></i> ${lesson.minutes} min</span><span><i class="ph ph-pencil-line" aria-hidden="true"></i> Reading + practice</span><span><i class="ph ph-exam" aria-hidden="true"></i> Graded evaluation</span></div>
+              <div class="lesson-badges"><span><i class="ph ph-book-open-text" aria-hidden="true"></i> Lesson ${lessonIndex + 1} of 4</span><span><i class="ph ph-clock" aria-hidden="true"></i> ${lesson.minutes} min</span><span><i class="ph ph-exam" aria-hidden="true"></i> Reading, practice &amp; evaluation</span></div>
               <h1>${lesson.title}</h1>
               <p>${lesson.summary}</p>
             </div>
 
+            ${moduleLessonTrailHTML(module)}
+
             ${lessonBriefHTML(module, lesson)}
 
-            <nav class="article-toc" aria-label="On this page"><b>In this lesson</b><a href="#learn/${module.id}/${lesson.id}/objectives">Objectives</a><a href="#learn/${module.id}/${lesson.id}/source-reading">Textbook</a><a href="#learn/${module.id}/${lesson.id}/core-concept">Framework</a><a href="#learn/${module.id}/${lesson.id}/playbook">Method</a><a href="#learn/${module.id}/${lesson.id}/case">Case</a><a href="#learn/${module.id}/${lesson.id}/practice-task">Practice</a><a href="#learn/${module.id}/${lesson.id}/evaluation">Evaluation</a></nav>
+            <nav class="article-toc" aria-label="On this page"><b>In this lesson</b><a href="#learn/${module.id}/${lesson.id}/objectives">Objectives</a><a href="#learn/${module.id}/${lesson.id}/source-reading">Textbook</a><a href="#learn/${module.id}/${lesson.id}/core-concept">Framework</a><a href="#learn/${module.id}/${lesson.id}/deep-dive">Deep dive</a><a href="#learn/${module.id}/${lesson.id}/playbook">Method</a><a href="#learn/${module.id}/${lesson.id}/case">Case</a><a href="#learn/${module.id}/${lesson.id}/practice-task">Practice</a><a href="#learn/${module.id}/${lesson.id}/evaluation">Evaluation</a></nav>
 
             <section class="reading-section" id="objectives">
               <span class="reading-kicker">LEARNING OBJECTIVES</span><h2>What you will learn</h2>
@@ -810,6 +864,8 @@ function renderLearn(reopenSyllabus = false) {
               </div>
               <aside class="key-idea"><span><i class="ph ph-lightbulb" aria-hidden="true"></i> DECISION RULE</span><p>${decisionQuestion(module, lesson, lessonIndex % 3)}</p></aside>
             </section>
+
+            ${deepDiveHTML(module, lesson)}
 
             <section class="reading-section" id="playbook">
               <span class="reading-kicker">FIELD METHOD</span><h2>Apply it in five moves</h2>
@@ -1208,6 +1264,7 @@ document.addEventListener("click", handleClick);
 window.addEventListener("hashchange", render);
 
 document.addEventListener("input", (event) => {
+  if (event.target.id === "syllabusFilter") { filterSyllabus(event.target.value); return; }
   if (event.target.id === "dialogLessonNote") { state.notes[lessonKey(state.currentModule, state.currentLesson)] = event.target.value; saveState(); }
   if (event.target.id === "lessonEvaluationResponse") {
     const key = lessonKey(state.currentModule, state.currentLesson);

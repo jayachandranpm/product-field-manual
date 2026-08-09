@@ -80,6 +80,10 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(js, /templateText/);
   assert.match(js, /lessonBriefHTML/);
   assert.match(js, /sourceReadingHTML/);
+  assert.match(js, /deepDiveHTML/);
+  assert.match(js, /moduleLessonTrailHTML/);
+  assert.match(js, /filterSyllabus/);
+  assert.match(js, /id=\"syllabusFilter\"/);
   assert.match(js, /lessonEvaluationHTML/);
   assert.match(js, /evaluationReady/);
   assert.match(js, /pc-lesson-evaluations/);
@@ -99,6 +103,10 @@ test("ships a self-contained GitHub Pages course", async () => {
   assert.match(css, /\.lesson-brief/);
   assert.match(css, /\.source-chapter/);
   assert.match(css, /\.source-note-grid/);
+  assert.match(css, /--sidebar-bg:/);
+  assert.match(css, /\.module-lesson-trail/);
+  assert.match(css, /\.deep-dive-list/);
+  assert.doesNotMatch(css, /\.tiny-course-number[^}]*background:\s*var\(--course-color\)/s);
   assert.match(css, /\.lesson-evaluation/);
   assert.match(css, /\.evidence-table/);
   assert.match(css, /\.learning-layout \{ min-height:/);
