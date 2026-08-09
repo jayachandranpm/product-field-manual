@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="The Product Field Manual: a rigorous, interactive product management course from first principles to product leadership and AI." />
+    <meta name="theme-color" content="#1f49d8" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The Product Field Manual" />
+    <meta property="og:description" content="Learn to build what matters. 12 modules, 48 lessons, and 5 live product practice labs." />
+    <meta property="og:image" content="og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="The Product Field Manual" />
+    <meta name="twitter:description" content="Learn to build what matters." />
+    <meta name="twitter:image" content="og.png" />
+    <title>The Product Field Manual</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to course</a>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Course navigation">
+        <a class="brand" href="#top" aria-label="The Product Field Manual home">
+          <span class="brand-mark" aria-hidden="true">PF</span>
+          <span>
+            <strong>Product</strong>
+            <small>Field Manual</small>
+          </span>
+        </a>
+
+        <nav class="side-nav">
+          <a class="active" href="#top"><span>01</span> Command center</a>
+          <a href="#pathways"><span>02</span> Your pathway</a>
+          <a href="#curriculum"><span>03</span> Curriculum</a>
+          <a href="#practice"><span>04</span> Practice lab</a>
+          <a href="#capstone"><span>05</span> Capstone</a>
+          <a href="#sources"><span>06</span> Sources</a>
+        </nav>
+
+        <div class="side-progress" aria-live="polite">
+          <div class="progress-copy">
+            <span>Course mastery</span>
+            <strong id="sideProgressLabel">0%</strong>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="Course completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="sideProgressBar"></span>
+          </div>
+          <p id="resumeCopy">Pick a pathway to begin.</p>
+        </div>
+
+        <div class="side-actions">
+          <button class="icon-button" id="searchButton" type="button" aria-label="Search the course">
+            <span aria-hidden="true">⌕</span> Search <kbd>/</kbd>
+          </button>
+          <button class="icon-button" id="themeButton" type="button" aria-label="Switch color theme">
+            <span id="themeIcon" aria-hidden="true">◐</span> <span id="themeLabel">Dark mode</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="page-shell">
+        <header class="mobile-header">
+          <a class="brand" href="#top">
+            <span class="brand-mark" aria-hidden="true">PF</span>
+            <span><strong>Product</strong><small>Field Manual</small></span>
+          </a>
+          <button class="icon-button compact" id="mobileSearchButton" type="button" aria-label="Search the course">⌕</button>
+        </header>
+
+        <main id="main">
+          <section class="hero" id="top" aria-labelledby="hero-title">
+            <div class="hero-copy">
+              <p class="eyebrow"><span></span> The product operating system</p>
+              <h1 id="hero-title">Learn to build<br /><em>what matters.</em></h1>
+              <p class="hero-lede">A field-tested product management course for first-timers, working PMs, and product leaders. Learn the judgment behind discovery, strategy, metrics, execution, growth, and AI—not just the vocabulary.</p>
+              <div class="hero-actions">
+                <a class="button primary" href="#pathways">Choose your pathway <span aria-hidden="true">→</span></a>
+                <button class="button secondary" type="button" data-open-module="m01">Preview lesson</button>
+              </div>
+              <div class="hero-proof" aria-label="Course highlights">
+                <span><strong>12</strong> modules</span>
+                <span><strong>48</strong> lessons</span>
+                <span><strong>5</strong> live labs</span>
+                <span><strong>30</strong> day capstone</span>
+              </div>
+            </div>
+
+            <div class="hero-board" aria-label="The product decision loop">
+              <div class="board-topline">
+                <span>FIELD NOTE / 001</span>
+                <span class="status-dot">Live curriculum</span>
+              </div>
+              <div class="decision-loop">
+                <div class="loop-center">
+                  <span>OUTCOME</span>
+                  <strong>Value<br />created</strong>
+                </div>
+                <div class="loop-node node-one"><small>01</small><strong>Explore</strong><span>Find the truth</span></div>
+                <div class="loop-node node-two"><small>02</small><strong>Choose</strong><span>Make the bet</span></div>
+                <div class="loop-node node-three"><small>03</small><strong>Ship</strong><span>Reduce the risk</span></div>
+                <div class="loop-node node-four"><small>04</small><strong>Learn</strong><span>Close the loop</span></div>
+              </div>
+              <div class="board-caption">
+                <span class="caption-index">THE PM LOOP</span>
+                <p>Strong product teams turn evidence into decisions, decisions into outcomes, and outcomes into new evidence.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="manifesto-strip" aria-label="Course principle">
+            <p>Frameworks are scaffolding.</p>
+            <p>Judgment is the craft.</p>
+            <p>Outcomes are the score.</p>
+          </section>
+
+          <section class="section pathways" id="pathways" aria-labelledby="pathways-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow"><span></span> Start where you are</p>
+                <h2 id="pathways-title">One course.<br />Three altitudes.</h2>
+              </div>
+              <p>Choose a starting point. Your recommended route updates instantly, and your progress stays on this device.</p>
+            </div>
+
+            <div class="level-picker" role="radiogroup" aria-label="Choose your product management level">
+              <button class="level-card selected" type="button" role="radio" aria-checked="true" data-level="explorer">
+                <span class="level-number">01</span>
+                <span class="level-copy">
+                  <small>New to product</small>
+                  <strong>Explorer</strong>
+                  <span>Build a clean mental model and your first evidence-led case.</span>
+                </span>
+                <span class="level-check" aria-hidden="true">✓</span>
+              </button>
+              <button class="level-card" type="button" role="radio" aria-checked="false" data-level="builder">
+                <span class="level-number">02</span>
+                <span class="level-copy">
+                  <small>0–4 years</small>
+                  <strong>Builder</strong>
+                  <span>Sharpen discovery, metrics, execution, and technical fluency.</span>
+                </span>
+                <span class="level-check" aria-hidden="true">✓</span>
+              </button>
+              <button class="level-card" type="button" role="radio" aria-checked="false" data-level="leader">
+                <span class="level-number">03</span>
+                <span class="level-copy">
+                  <small>Senior / Lead</small>
+                  <strong>Leader</strong>
+                  <span>Make portfolio choices, shape teams, and lead AI-era product bets.</span>
+                </span>
+                <span class="level-check" aria-hidden="true">✓</span>
+              </button>
+            </div>
+
+            <div class="route-card" id="routeCard" aria-live="polite">
+              <div>
+                <span class="route-kicker">RECOMMENDED ROUTE</span>
+                <h3 id="routeTitle">Explorer → Product Builder</h3>
+                <p id="routeDescription">Start with product thinking, discovery, product sense, prioritization, and metrics. Finish with a compact product brief.</p>
+              </div>
+              <div class="route-map" id="routeMap" aria-label="Recommended modules"></div>
+              <button class="button ink" id="startRouteButton" type="button">Start this route <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <section class="section curriculum" id="curriculum" aria-labelledby="curriculum-title">
+            <div class="section-heading curriculum-heading">
+              <div>
+                <p class="eyebrow"><span></span> The full stack</p>
+                <h2 id="curriculum-title">From first principle<br />to hard calls.</h2>
+              </div>
+              <div class="heading-aside">
+                <span id="visibleModuleCount">12 modules</span>
+                <p>Every module includes a decision tool, a real-world drill, and an artifact you can show.</p>
+              </div>
+            </div>
+
+            <div class="filter-row" role="toolbar" aria-label="Filter curriculum">
+              <button class="filter-button active" type="button" data-filter="all">All</button>
+              <button class="filter-button" type="button" data-filter="foundation">Foundation</button>
+              <button class="filter-button" type="button" data-filter="craft">PM craft</button>
+              <button class="filter-button" type="button" data-filter="leadership">Leadership</button>
+              <button class="filter-button" type="button" data-filter="ai">AI product</button>
+            </div>
+
+            <div class="module-grid" id="moduleGrid"></div>
+          </section>
+
+          <section class="section principles" aria-labelledby="principles-title">
+            <div class="principle-intro">
+              <p class="eyebrow light"><span></span> Judgment over jargon</p>
+              <h2 id="principles-title">The four habits<br />behind great PMs.</h2>
+              <p>Use these as a review lens on every brief, roadmap, experiment, and launch.</p>
+            </div>
+            <div class="principle-list">
+              <article>
+                <span>01</span>
+                <div><h3>Start with evidence</h3><p>Separate what you know, what you infer, and what must still be tested.</p></div>
+              </article>
+              <article>
+                <span>02</span>
+                <div><h3>Make the choice explicit</h3><p>A strategy is meaningful only when it rules out attractive alternatives.</p></div>
+              </article>
+              <article>
+                <span>03</span>
+                <div><h3>Instrument the downside</h3><p>Pair every success metric with a guardrail that exposes who or what might lose.</p></div>
+              </article>
+              <article>
+                <span>04</span>
+                <div><h3>Close the learning loop</h3><p>A shipped feature is unfinished until the team knows what changed and why.</p></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="section practice" id="practice" aria-labelledby="practice-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow"><span></span> Deliberate practice</p>
+                <h2 id="practice-title">The product<br />practice lab.</h2>
+              </div>
+              <p>Reading builds recognition. These labs build recall, decision quality, and interview-ready structure.</p>
+            </div>
+
+            <div class="lab-shell">
+              <div class="lab-tabs" role="tablist" aria-label="Practice tools">
+                <button class="lab-tab active" id="tab-flashcards" type="button" role="tab" aria-selected="true" aria-controls="panel-flashcards" data-lab="flashcards"><span>01</span> Flashcards</button>
+                <button class="lab-tab" id="tab-quiz" type="button" role="tab" aria-selected="false" aria-controls="panel-quiz" data-lab="quiz"><span>02</span> Mastery quiz</button>
+                <button class="lab-tab" id="tab-rice" type="button" role="tab" aria-selected="false" aria-controls="panel-rice" data-lab="rice"><span>03</span> RICE lab</button>
+                <button class="lab-tab" id="tab-metrics" type="button" role="tab" aria-selected="false" aria-controls="panel-metrics" data-lab="metrics"><span>04</span> Metric tree</button>
+                <button class="lab-tab" id="tab-interview" type="button" role="tab" aria-selected="false" aria-controls="panel-interview" data-lab="interview"><span>05</span> Interview dojo</button>
+              </div>
+
+              <div class="lab-panels">
+                <section class="lab-panel active" id="panel-flashcards" role="tabpanel" aria-labelledby="tab-flashcards">
+                  <div class="panel-heading">
+                    <div><span class="panel-index">RECALL / 16 CARDS</span><h3>Know the tool. Know when not to use it.</h3></div>
+                    <div class="flash-controls"><button class="text-button" id="shuffleCards" type="button">Shuffle</button><span id="flashCounter">1 / 16</span></div>
+                  </div>
+                  <button class="flashcard" id="flashcard" type="button" aria-label="Flip flashcard">
+                    <span class="flash-face flash-front">
+                      <small id="flashCategory">METRICS</small>
+                      <strong id="flashQuestion">What makes a useful North Star Metric?</strong>
+                      <span class="flip-hint">Tap to reveal <b>↗</b></span>
+                    </span>
+                    <span class="flash-face flash-back">
+                      <small>FIELD ANSWER</small>
+                      <strong id="flashAnswer">It represents recurring value delivered to the customer, connects to durable business value, and can be influenced by the team.</strong>
+                      <span class="flip-hint">Tap to return <b>↙</b></span>
+                    </span>
+                  </button>
+                  <div class="flash-nav">
+                    <button class="button secondary small" id="previousCard" type="button">← Previous</button>
+                    <button class="button primary small" id="nextCard" type="button">Next card →</button>
+                  </div>
+                </section>
+
+                <section class="lab-panel" id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+                  <div class="panel-heading">
+                    <div><span class="panel-index">MASTERY / 12 MCQs</span><h3>Make the call, then inspect your reasoning.</h3></div>
+                    <span class="quiz-score" id="quizScore">Score 0 / 0</span>
+                  </div>
+                  <div class="quiz-progress"><span id="quizProgressBar"></span></div>
+                  <div class="quiz-card" id="quizCard">
+                    <span class="question-count" id="questionCount">Question 1 of 12</span>
+                    <h4 id="quizQuestion">Loading question…</h4>
+                    <div class="answer-list" id="answerList"></div>
+                    <div class="quiz-explanation" id="quizExplanation" hidden></div>
+                    <button class="button primary" id="nextQuestion" type="button" disabled>Check answer</button>
+                  </div>
+                </section>
+
+                <section class="lab-panel" id="panel-rice" role="tabpanel" aria-labelledby="tab-rice" hidden>
+                  <div class="panel-heading">
+                    <div><span class="panel-index">DECISION LAB / RICE</span><h3>Rank a small backlog without hiding the assumptions.</h3></div>
+                    <span class="formula">(Reach × Impact × Confidence) ÷ Effort</span>
+                  </div>
+                  <div class="rice-scenario">
+                    <strong>Scenario</strong>
+                    <p>You own activation for a B2B collaboration tool. Score three bets for the next quarter. Treat the output as a conversation starter, not truth.</p>
+                  </div>
+                  <div class="rice-table-wrap">
+                    <table class="rice-table">
+                      <thead><tr><th>Initiative</th><th>Reach / qtr</th><th>Impact</th><th>Confidence %</th><th>Effort / person-months</th><th>RICE</th></tr></thead>
+                      <tbody id="riceTableBody">
+                        <tr data-rice-row><td><input aria-label="First initiative name" data-field="name" value="Guided team setup" /></td><td><input aria-label="First initiative reach" type="number" min="0" data-field="reach" value="1800" /></td><td><select aria-label="First initiative impact" data-field="impact"><option value="3">Massive 3×</option><option value="2" selected>High 2×</option><option value="1">Medium 1×</option><option value="0.5">Low .5×</option><option value="0.25">Minimal .25×</option></select></td><td><input aria-label="First initiative confidence" type="number" min="0" max="100" data-field="confidence" value="80" /></td><td><input aria-label="First initiative effort" type="number" min="0.1" step="0.1" data-field="effort" value="3" /></td><td><output data-field="score">960</output></td></tr>
+                        <tr data-rice-row><td><input aria-label="Second initiative name" data-field="name" value="AI workspace import" /></td><td><input aria-label="Second initiative reach" type="number" min="0" data-field="reach" value="900" /></td><td><select aria-label="Second initiative impact" data-field="impact"><option value="3" selected>Massive 3×</option><option value="2">High 2×</option><option value="1">Medium 1×</option><option value="0.5">Low .5×</option><option value="0.25">Minimal .25×</option></select></td><td><input aria-label="Second initiative confidence" type="number" min="0" max="100" data-field="confidence" value="55" /></td><td><input aria-label="Second initiative effort" type="number" min="0.1" step="0.1" data-field="effort" value="5" /></td><td><output data-field="score">297</output></td></tr>
+                        <tr data-rice-row><td><input aria-label="Third initiative name" data-field="name" value="Invite reminder" /></td><td><input aria-label="Third initiative reach" type="number" min="0" data-field="reach" value="3100" /></td><td><select aria-label="Third initiative impact" data-field="impact"><option value="3">Massive 3×</option><option value="2">High 2×</option><option value="1">Medium 1×</option><option value="0.5" selected>Low .5×</option><option value="0.25">Minimal .25×</option></select></td><td><input aria-label="Third initiative confidence" type="number" min="0" max="100" data-field="confidence" value="95" /></td><td><input aria-label="Third initiative effort" type="number" min="0.1" step="0.1" data-field="effort" value="1" /></td><td><output data-field="score">1,472.5</output></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="rice-result" aria-live="polite"><span>Current lead</span><strong id="riceWinner">Invite reminder</strong><p id="riceInsight">High reach and low effort dominate this estimate. Pressure-test whether “low impact” still moves activation meaningfully.</p></div>
+                </section>
+
+                <section class="lab-panel" id="panel-metrics" role="tabpanel" aria-labelledby="tab-metrics" hidden>
+                  <div class="panel-heading">
+                    <div><span class="panel-index">MEASUREMENT LAB / GSM</span><h3>Build a metric tree from value, not from available data.</h3></div>
+                  </div>
+                  <div class="metric-builder">
+                    <form class="metric-form" id="metricForm">
+                      <label>Product name<input id="metricProductName" type="text" value="Orbit" maxlength="32" /></label>
+                      <label>Product model<select id="metricProductType"><option value="marketplace">Marketplace</option><option value="saas">B2B SaaS</option><option value="consumer">Consumer app</option><option value="ai">AI copilot</option></select></label>
+                      <label>Lifecycle stage<select id="metricStage"><option value="zero">0 → 1</option><option value="growth" selected>Growth</option><option value="mature">Mature</option></select></label>
+                      <button class="button primary" type="submit">Build metric tree →</button>
+                    </form>
+                    <div class="metric-tree" id="metricTree" aria-live="polite">
+                      <div class="tree-root"><small>NORTH STAR</small><strong>Weekly successful matches</strong><span>Recurring value exchanged by both sides</span></div>
+                      <div class="tree-branches">
+                        <div><small>INPUT 01</small><strong>Qualified supply</strong><span>Active providers × availability</span></div>
+                        <div><small>INPUT 02</small><strong>Match conversion</strong><span>Intent → accepted match</span></div>
+                        <div><small>INPUT 03</small><strong>Repeat rate</strong><span>Customers returning in 30 days</span></div>
+                      </div>
+                      <div class="tree-guardrail"><small>GUARDRAILS</small><strong>Cancellation rate · complaint rate · provider earnings spread</strong></div>
+                      <p class="tree-trap"><b>Watch the trap:</b> More transactions can hide worse match quality or an unhealthy side of the marketplace.</p>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="lab-panel" id="panel-interview" role="tabpanel" aria-labelledby="tab-interview" hidden>
+                  <div class="panel-heading">
+                    <div><span class="panel-index">INTERVIEW DOJO / 10 MIN</span><h3>Structure first. Then make the tradeoff.</h3></div>
+                    <span class="dojo-count" id="dojoCount">Prompt 1 / 10</span>
+                  </div>
+                  <div class="dojo-grid">
+                    <div class="dojo-prompt">
+                      <span id="dojoType">PRODUCT SENSE</span>
+                      <h4 id="dojoPrompt">Design a better airport experience for travelers with invisible disabilities.</h4>
+                      <button class="text-button" id="newPrompt" type="button">Give me another prompt ↻</button>
+                    </div>
+                    <div class="dojo-timer">
+                      <span>TIMEBOX</span>
+                      <strong id="timerDisplay">10:00</strong>
+                      <div><button class="button primary small" id="timerToggle" type="button">Start</button><button class="button secondary small" id="timerReset" type="button">Reset</button></div>
+                    </div>
+                    <ol class="dojo-rubric">
+                      <li><span>01</span><div><strong>Frame</strong><small>Goal, context, constraints</small></div></li>
+                      <li><span>02</span><div><strong>Choose</strong><small>Segment, problem, rationale</small></div></li>
+                      <li><span>03</span><div><strong>Design</strong><small>Solution, flow, tradeoffs</small></div></li>
+                      <li><span>04</span><div><strong>Measure</strong><small>North star, inputs, guardrails</small></div></li>
+                    </ol>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="section capstone" id="capstone" aria-labelledby="capstone-title">
+            <div class="capstone-lede">
+              <p class="eyebrow light"><span></span> The 30-day product launch</p>
+              <h2 id="capstone-title">Turn the course<br />into proof of work.</h2>
+              <p>Choose a real problem. Move from evidence to a tested decision, then publish the thinking—not a fantasy roadmap.</p>
+              <div class="capstone-progress" aria-live="polite">
+                <span><b id="capstoneComplete">0</b> of 4 phases complete</span>
+                <div class="progress-track light" role="progressbar" aria-label="Capstone progress" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0"><span id="capstoneProgressBar"></span></div>
+              </div>
+            </div>
+            <div class="capstone-phases">
+              <button class="phase-card" type="button" data-phase="discover" aria-pressed="false">
+                <span class="phase-day">DAYS 01–07</span><span class="phase-check">✓</span><strong>Discover</strong><p>Interview five users, map the current journey, and write an evidence-backed opportunity.</p><small>Artifact: evidence brief</small>
+              </button>
+              <button class="phase-card" type="button" data-phase="decide" aria-pressed="false">
+                <span class="phase-day">DAYS 08–14</span><span class="phase-check">✓</span><strong>Decide</strong><p>Frame strategic choices, prioritize one bet, and define value, viability, feasibility, and usability risks.</p><small>Artifact: decision memo</small>
+              </button>
+              <button class="phase-card" type="button" data-phase="test" aria-pressed="false">
+                <span class="phase-day">DAYS 15–22</span><span class="phase-check">✓</span><strong>Test</strong><p>Prototype the riskiest assumption, run five tests, and pre-register a measurable decision rule.</p><small>Artifact: experiment readout</small>
+              </button>
+              <button class="phase-card" type="button" data-phase="pitch" aria-pressed="false">
+                <span class="phase-day">DAYS 23–30</span><span class="phase-check">✓</span><strong>Pitch</strong><p>Ship a narrative: problem, evidence, tradeoff, metric tree, launch plan, and what would change your mind.</p><small>Artifact: 6-page case study</small>
+              </button>
+            </div>
+          </section>
+
+          <section class="section sources" id="sources" aria-labelledby="sources-title">
+            <div class="section-heading sources-heading">
+              <div>
+                <p class="eyebrow"><span></span> Research notes</p>
+                <h2 id="sources-title">Built on field guides<br />and primary sources.</h2>
+              </div>
+              <p>The curriculum synthesizes the private study library in this workspace with public, primary guidance. Source material is paraphrased; private files are not redistributed.</p>
+            </div>
+
+            <div class="source-columns">
+              <div class="source-column">
+                <div class="source-column-head"><span>LOCAL STUDY LIBRARY</span><b>01</b></div>
+                <ul class="source-list local-source-list">
+                  <li><span>IIM Bangalore Product Management Casebook</span><small>Design · metrics · RCA · execution · strategy</small></li>
+                  <li><span>BITSoM Product Management Handbook</span><small>Lifecycle · PM craft · industries · cases</small></li>
+                  <li><span>FMS Product Management Casebook</span><small>Frameworks · product sense · technical cases</small></li>
+                  <li><span>XLRI PM Casebook 2025</span><small>PM roles · analytics · growth · technology</small></li>
+                  <li><span>IIM Calcutta &amp; MDI PM Casebooks</span><small>Cases · estimates · behavioral preparation</small></li>
+                  <li><span>PM Interview &amp; Metrics Guides</span><small>Sense · analytical · behavioral · company loops</small></li>
+                </ul>
+              </div>
+              <div class="source-column">
+                <div class="source-column-head"><span>PRIMARY WEB RESEARCH</span><b>02</b></div>
+                <ul class="source-list web-source-list">
+                  <li><a href="https://www.svpg.com/product-management-an-introduction/" target="_blank" rel="noreferrer"><span>SVPG — Product management &amp; empowered teams</span><b>↗</b></a></li>
+                  <li><a href="https://www.svpg.com/product-strategy-overview/" target="_blank" rel="noreferrer"><span>SVPG — Product strategy overview</span><b>↗</b></a></li>
+                  <li><a href="https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs" target="_blank" rel="noreferrer"><span>GOV.UK — Learning about user needs</span><b>↗</b></a></li>
+                  <li><a href="https://research.google.com/pubs/archive/36299.pdf" target="_blank" rel="noreferrer"><span>Google Research — HEART &amp; GSM</span><b>↗</b></a></li>
+                  <li><a href="https://www.microsoft.com/en-us/research/group/experimentation-platform-exp/" target="_blank" rel="noreferrer"><span>Microsoft Research — Experimentation Platform</span><b>↗</b></a></li>
+                  <li><a href="https://aws.amazon.com/executive-insights/content/product-management-at-amazon/" target="_blank" rel="noreferrer"><span>AWS — Working Backwards</span><b>↗</b></a></li>
+                  <li><a href="https://dora.dev/guides/dora-metrics/" target="_blank" rel="noreferrer"><span>DORA — Delivery performance metrics</span><b>↗</b></a></li>
+                  <li><a href="https://pair.withgoogle.com/guidebook-v2/" target="_blank" rel="noreferrer"><span>Google PAIR — People + AI Guidebook</span><b>↗</b></a></li>
+                  <li><a href="https://airc.nist.gov/" target="_blank" rel="noreferrer"><span>NIST — AI Risk Management resources</span><b>↗</b></a></li>
+                  <li><a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noreferrer"><span>W3C — WCAG 2.2</span><b>↗</b></a></li>
+                  <li><a href="https://scrumguides.org/scrum-guide.html" target="_blank" rel="noreferrer"><span>Scrum Guides — Official Scrum Guide</span><b>↗</b></a></li>
+                  <li><a href="https://developers.google.com/machine-learning/guides/rules-of-ml" target="_blank" rel="noreferrer"><span>Google — Rules of Machine Learning</span><b>↗</b></a></li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="closing" aria-labelledby="closing-title">
+            <span class="closing-kicker">YOUR NEXT PRODUCT STARTS HERE</span>
+            <h2 id="closing-title">Stop collecting frameworks.<br /><em>Start making better calls.</em></h2>
+            <a class="button light-button" href="#pathways">Choose your route <span aria-hidden="true">↑</span></a>
+          </section>
+        </main>
+
+        <footer>
+          <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">PF</span><span><strong>Product</strong><small>Field Manual</small></span></a>
+          <p>Designed for deliberate practice. Progress is stored locally in your browser.</p>
+          <a href="#top">Back to top ↑</a>
+        </footer>
+      </div>
+    </div>
+
+    <dialog class="module-dialog" id="moduleDialog" aria-labelledby="moduleDialogTitle">
+      <div class="dialog-shell">
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Close module">×</button>
+        <div class="dialog-rail">
+          <span id="dialogModuleNumber">MODULE 01</span>
+          <div class="dialog-rail-line"></div>
+          <small id="dialogLevel">FOUNDATION</small>
+        </div>
+        <div class="dialog-content">
+          <p class="eyebrow"><span></span> Module field guide</p>
+          <h2 id="moduleDialogTitle">Product thinking</h2>
+          <p class="dialog-summary" id="dialogSummary"></p>
+          <div class="dialog-meta">
+            <span><small>TIME</small><b id="dialogTime"></b></span>
+            <span><small>LESSONS</small><b>4</b></span>
+            <span><small>OUTPUT</small><b id="dialogOutput"></b></span>
+          </div>
+          <div class="lesson-list" id="dialogLessons"></div>
+          <div class="field-drill">
+            <span>FIELD DRILL</span>
+            <p id="dialogDrill"></p>
+          </div>
+          <div class="dialog-actions">
+            <button class="button primary" id="completeModuleButton" type="button">Mark module complete</button>
+            <button class="button secondary" type="button" data-close-dialog>Close</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="search-dialog" id="searchDialog" aria-label="Search course">
+      <div class="search-shell">
+        <div class="search-input-wrap"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search modules, tools, concepts…" autocomplete="off" /><kbd>esc</kbd></div>
+        <div class="search-results" id="searchResults"><p>Try “metrics”, “AI”, “strategy”, or “interview”.</p></div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
